@@ -1,4 +1,4 @@
-# Sharelatex 镜像部署说明
+# Sharelatex 部署说明
 
 ## 使用此镜像
 

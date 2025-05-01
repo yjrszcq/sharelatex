@@ -35,10 +35,10 @@ cd ./overleaf-toolkit
 ```
 bin/init
 ```
-会在 config 目录下生成以下三个文件：
-- overleaf.rc
-- variables.env
-- version
+- 会在 config 目录下生成以下三个文件：
+  - overleaf.rc
+  - variables.env
+  - version
 
 4. 进入 config 目录
 ```

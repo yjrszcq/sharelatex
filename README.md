@@ -53,7 +53,7 @@ cd config
 OVERLEAF_IMAGE_NAME=szcq/sharelatex #更改镜像
 OVERLEAF_DATA_PATH=/mydata/docker/overleaf/overleaf #数据的保存路径
 SERVER_PRO=false
-OVERLEAF_LISTEN_IP=0.0.0.0 #如果需要外部可访问
+OVERLEAF_LISTEN_IP=0.0.0.0 #如果不需要外部可访问，则填127.0.0.1
 OVERLEAF_PORT=10802 #将该行修改为你所需服务端口，默认为80端口
 ```
 - 其他的按需更改即可

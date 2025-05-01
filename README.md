@@ -92,7 +92,7 @@ cd ./overleaf-toolkit
 bin/stop
 ```
 
-2. 如果不是 pro 用户，Sibling Containers 需要为 false
+2. 如果不是 pro 用户，则文件 `overleaf.rc` 里的 Sibling Containers 需要为 `false`
 ```
 # Sibling Containers
 SIBLING_CONTAINERS_ENABLED=false

@@ -16,7 +16,7 @@ git clone https://github.com/overleaf/toolkit.git ./overleaf-toolkit
 cd ./overleaf-toolkit
 ```
 
-3. **初始化配置**
+#### 3. 初始化配置
 ```
 bin/init
 ```

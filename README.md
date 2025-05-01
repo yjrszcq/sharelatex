@@ -6,12 +6,12 @@
 
 > Overleaf Toolkit 部署
 
-1. 拉取 Overleaf Toolkit 工具包
+#### 1. 拉取 Overleaf Toolkit 工具包
 ```
 git clone https://github.com/overleaf/toolkit.git ./overleaf-toolkit
 ```
 
-2. 进入 overleaf-toolkit 目录
+#### 2. 进入 overleaf-toolkit 目录
 ```
 cd ./overleaf-toolkit
 ```
@@ -25,12 +25,12 @@ bin/init
   - variables.env
   - version
 
-4. 进入 config 目录
+#### 4. 进入 config 目录
 ```
 cd config
 ```
 
-5. 编辑文件 `overleaf.rc`
+#### 5. 编辑文件 `overleaf.rc`
 ```
 # Sharelatex container
 OVERLEAF_IMAGE_NAME=szcq/sharelatex #更改镜像
@@ -41,23 +41,23 @@ OVERLEAF_PORT=10802 #将该行修改为你所需服务端口，默认为80端口
 ```
 - 其他的按需更改即可
 
-6. 编辑文件 `version`
+#### 6. 编辑文件 `version`
 ```
 5.4.1 #此为szcq/sharelatex镜像的版本，请改为你需要的版本
 ```
 
-7. 初始化 docker 服务
+#### 7. 初始化 docker 服务
 ```
 bin/up
 ```
 - 等待一会儿后，`Ctrl + C` 停止
 
-8. 启动 docker 服务
+#### 8. 启动 docker 服务
 ```
 bin/start
 ```
 
-9. 创建管理员账户
+#### 9. 创建管理员账户
 - 进入以下页面，填写邮箱和密码，创建管理员账户
 ```
 http://localhost:服务端口/launchpad
@@ -65,9 +65,9 @@ http://localhost:服务端口/launchpad
 
 ### 注意事项
 
-1. 若要在 Project 中使用中文，则要在编辑项目时，在左上角的 `MENU` 里，`Compiler` 选择 `XeLaTeX`
+#### 1. 若要在 Project 中使用中文，则要在编辑项目时，在左上角的 `MENU` 里，`Compiler` 选择 `XeLaTeX`
 
-2. 停止运行
+#### 2. 停止运行
 - 进入 overleaf-toolkit 目录
 ```
 cd ./overleaf-toolkit
@@ -77,7 +77,7 @@ cd ./overleaf-toolkit
 bin/stop
 ```
 
-3. 如果不是 pro 用户，则文件 `overleaf.rc` 里的 Sibling Containers 需要为 `false`
+#### 3. 如果不是 pro 用户，则文件 `overleaf.rc` 里的 Sibling Containers 需要为 `false`
 ```
 # Sibling Containers
 SIBLING_CONTAINERS_ENABLED=false

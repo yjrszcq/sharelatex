@@ -65,7 +65,9 @@ http://localhost:服务端口/launchpad
 
 ### 注意事项
 
-1. 停止运行
+1. 若要在 Project 中使用中文，则要在编辑项目时，在左上角的 `MENU` 里，`Compiler` 选择 `XeLaTeX`
+
+2. 停止运行
 - 进入 overleaf-toolkit 目录
 ```
 cd ./overleaf-toolkit
@@ -75,14 +77,14 @@ cd ./overleaf-toolkit
 bin/stop
 ```
 
-2. 如果不是 pro 用户，则文件 `overleaf.rc` 里的 Sibling Containers 需要为 `false`
+3. 如果不是 pro 用户，则文件 `overleaf.rc` 里的 Sibling Containers 需要为 `false`
 ```
 # Sibling Containers
 SIBLING_CONTAINERS_ENABLED=false
 DOCKER_SOCKET_PATH=/var/run/docker.sock
 ```
 
-3. 若要在 Project 中使用中文，则要在编辑项目时，在左上角的 `MENU` 里，`Compiler` 选择 `XeLaTeX`
+
 
 ## 自己制作镜像
 

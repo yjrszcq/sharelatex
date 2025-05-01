@@ -50,7 +50,7 @@ cd config
 5. 编辑文件 `overleaf.rc`
 ```
 # Sharelatex container
-OVERLEAF_IMAGE_NAME=szcq/sharelatex #换成我的镜像
+OVERLEAF_IMAGE_NAME=szcq/sharelatex #更改镜像
 OVERLEAF_DATA_PATH=/mydata/docker/overleaf/overleaf #数据的保存路径
 SERVER_PRO=false
 OVERLEAF_LISTEN_IP=0.0.0.0 #如果需要外部可访问

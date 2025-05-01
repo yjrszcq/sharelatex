@@ -84,9 +84,7 @@ DOCKER_SOCKET_PATH=/var/run/docker.sock
 
 3. 若要在 Project 中使用中文，则要在编辑项目时，在左上角的 `MENU` 里，`Compiler` 选择 `XeLaTeX`
 
-## 更新官方镜像版本到此镜像
-
-> 如果你需要自己制作镜像，才需要看此部分
+## 自己制作镜像
 
 ### 关联 Docker Hub 账号
 
@@ -94,11 +92,11 @@ DOCKER_SOCKET_PATH=/var/run/docker.sock
 - 点击 `New epository secrets`, 在 `Name *` 里填写 `DOCKER_USERNAME`，在 `Secret *` 里填写 Docker Hub 账号的用户名
 - 点击 `New epository secrets`, 在 `Name *` 里填写 `DOCKER_PASSWORD`，在 `Secret *` 里填写 Docker Hub 账号的密码
 
-### 更新版本信息
+### 更新版本信息（可跳过，以后需要更新官方镜像时，执行此处操作，并编译镜像）
 
 - 在 `Code` 中，编辑文件 `Dockerfile`，把 `from sharelatex/sharelatex:5.4.1` 中的版本号改为最新的版本号
 - 在 `Code` 中，编辑文件 `.github/workflows/docker.yaml`，把 `tags: ${{ secrets.DOCKER_USERNAME }}/sharelatex:5.4.1` 中的版本号改为最新的版本号
 
-### 更新镜像
+### 编译镜像
 
 - 在 `Actions` 中，点击 `Build and Push Docker Image`，在 `Run workflow` 下拉列表中点击 `Run workflow`，即可编译镜像，等编译完成后，会自动推送到 Docker Hub

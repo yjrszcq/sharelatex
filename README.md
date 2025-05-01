@@ -43,7 +43,7 @@ OVERLEAF_PORT=10802 #将该行修改为你所需服务端口，默认为80端口
 
 6. 编辑文件 `version`
 ```
-5.4.1 #此为sharelatex镜像的版本，请改为你需要的版本
+5.4.1 #此为szcq/sharelatex镜像的版本，请改为你需要的版本
 ```
 
 7. 初始化 docker 服务

@@ -1,4 +1,4 @@
-from sharelatex/sharelatex:latest
+from sharelatex/sharelatex:5.4.1
 
 RUN tlmgr install scheme-full
 

@@ -25,4 +25,4 @@ jobs:
       with:
         context: .
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/sharelatex:macos
+        tags: ${{ secrets.DOCKER_USERNAME }}/sharelatex:5.0.3-arm64

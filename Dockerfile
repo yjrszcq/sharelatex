@@ -1,9 +1,8 @@
 FROM immortal6736/sharelatex:5.0.3
-# FROM darktohka/sharelatex-arm64:base-arm64
 
 RUN apt update
 
-# FROM immortal6736/sharelatex:5.0.3 should comment out this line
+# from immortal6736/sharelatex:5.0.3 should comment out this line
 # RUN tlmgr install scheme-full
 
 RUN apt install -y latex-cjk-all texlive-lang-chinese texlive-lang-english

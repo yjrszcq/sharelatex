@@ -1,4 +1,4 @@
-from darktohka/sharelatex-arm64:arm64
+from immortal6736/sharelatex:5.0.3
 
 RUN tlmgr install scheme-full
 

@@ -1,9 +1,9 @@
-FROM immortal6736/sharelatex:5.0.3
+FROM fuckery/sharelatex:5.5.1-arm64-basic
 
 RUN apt update
 
 # from immortal6736/sharelatex:5.0.3 should comment out this line
-# RUN tlmgr install scheme-full
+RUN tlmgr install scheme-full
 
 RUN apt install -y latex-cjk-all texlive-lang-chinese texlive-lang-english
 RUN apt install -y xfonts-wqy

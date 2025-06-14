@@ -11,6 +11,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: 激活 Docker 服务
+      run: |
+        nohup sudo /Applications/Docker.app/Contents/MacOS/Docker --unattended &
+        while ! docker info &>/dev/null; do sleep 1; done
+
     - name: Login to DockerHub
       uses: docker/login-action@v1
       with:

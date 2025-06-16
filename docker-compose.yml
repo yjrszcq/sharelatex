@@ -4,7 +4,7 @@ services:
         # Server Pro users:
         # image: quay.io/sharelatex/sharelatex-pro
         image: szcq/sharelatex:5.0.3-arm64
-        container_name: sharelatex
+        container_name: overleaf-sharelatex
         depends_on:
             mongo:
                 condition: service_healthy
@@ -17,8 +17,8 @@ services:
             - redis
         stop_grace_period: 60s
         volumes:
-            - ./overleaf/overleaf/lib:/var/lib/overleaf
-            - ./overleaf/overleaf/log:/var/log/overleaf
+            - /Users/yjrszcq/MyData/docker/overleaf/overleaf/lib:/var/lib/overleaf
+            - /Users/yjrszcq/MyData/docker/overleaf/overleaf/log:/var/log/overleaf
             # - ./data/sharelatex_texlive:/texlive
             ########################################################################
             ####  Server Pro: Uncomment the following line to mount the docker  ####
@@ -50,29 +50,29 @@ services:
             ## Set for SSL via nginx-proxy
             #VIRTUAL_HOST: 103.112.212.22
 
-            # OVERLEAF_SITE_URL: http://sharelatex.mydomain.com
-            # OVERLEAF_NAV_TITLE: Our ShareLaTeX Instance
-            # OVERLEAF_HEADER_IMAGE_URL: http://somewhere.com/mylogo.png
-            # OVERLEAF_ADMIN_EMAIL: support@it.com
+            # SHARELATEX_SITE_URL: http://sharelatex.mydomain.com
+            # SHARELATEX_NAV_TITLE: Our ShareLaTeX Instance
+            # SHARELATEX_HEADER_IMAGE_URL: http://somewhere.com/mylogo.png
+            # SHARELATEX_ADMIN_EMAIL: support@it.com
 
-            # OVERLEAF_LEFT_FOOTER: '[{"text": "Powered by <a href=\"https://www.sharelatex.com\">ShareLaTeX</a> 2016"},{"text": "Another page I want to link to can be found <a href=\"here\">here</a>"} ]'
-            # OVERLEAF_RIGHT_FOOTER: '[{"text": "Hello I am on the Right"} ]'
+            # SHARELATEX_LEFT_FOOTER: '[{"text": "Powered by <a href=\"https://www.sharelatex.com\">ShareLaTeX</a> 2016"},{"text": "Another page I want to link to can be found <a href=\"here\">here</a>"} ]'
+            # SHARELATEX_RIGHT_FOOTER: '[{"text": "Hello I am on the Right"} ]'
 
-            # OVERLEAF_EMAIL_FROM_ADDRESS: "team@sharelatex.com"
+            # SHARELATEX_EMAIL_FROM_ADDRESS: "team@sharelatex.com"
 
-            # OVERLEAF_EMAIL_AWS_SES_ACCESS_KEY_ID:
-            # OVERLEAF_EMAIL_AWS_SES_SECRET_KEY:
+            # SHARELATEX_EMAIL_AWS_SES_ACCESS_KEY_ID:
+            # SHARELATEX_EMAIL_AWS_SES_SECRET_KEY:
 
-            # OVERLEAF_EMAIL_SMTP_HOST: smtp.mydomain.com
-            # OVERLEAF_EMAIL_SMTP_PORT: 587
-            # OVERLEAF_EMAIL_SMTP_SECURE: false
-            # OVERLEAF_EMAIL_SMTP_USER:
-            # OVERLEAF_EMAIL_SMTP_PASS:
-            # OVERLEAF_EMAIL_SMTP_TLS_REJECT_UNAUTH: true
-            # OVERLEAF_EMAIL_SMTP_IGNORE_TLS: false
-            # OVERLEAF_EMAIL_SMTP_NAME: '127.0.0.1'
-            # OVERLEAF_EMAIL_SMTP_LOGGER: true
-            # OVERLEAF_CUSTOM_EMAIL_FOOTER: "This system is run by department x"
+            # SHARELATEX_EMAIL_SMTP_HOST: smtp.mydomain.com
+            # SHARELATEX_EMAIL_SMTP_PORT: 587
+            # SHARELATEX_EMAIL_SMTP_SECURE: false
+            # SHARELATEX_EMAIL_SMTP_USER:
+            # SHARELATEX_EMAIL_SMTP_PASS:
+            # SHARELATEX_EMAIL_SMTP_TLS_REJECT_UNAUTH: true
+            # SHARELATEX_EMAIL_SMTP_IGNORE_TLS: false
+            # SHARELATEX_EMAIL_SMTP_NAME: '127.0.0.1'
+            # SHARELATEX_EMAIL_SMTP_LOGGER: true
+            # SHARELATEX_CUSTOM_EMAIL_FOOTER: "This system is run by department x"
 
             # ENABLE_CRON_RESOURCE_DELETION: true
 
@@ -88,28 +88,28 @@ services:
             # DOCKER_RUNNER: 'false'
 
             ## Works with test LDAP server shown at bottom of docker compose
-            # OVERLEAF_LDAP_URL: 'ldap://ldap:389'
-            # OVERLEAF_LDAP_SEARCH_BASE: 'ou=people,dc=planetexpress,dc=com'
-            # OVERLEAF_LDAP_SEARCH_FILTER: '(uid={{username}})'
-            # OVERLEAF_LDAP_BIND_DN: 'cn=admin,dc=planetexpress,dc=com'
-            # OVERLEAF_LDAP_BIND_CREDENTIALS: 'GoodNewsEveryone'
-            # OVERLEAF_LDAP_EMAIL_ATT: 'mail'
-            # OVERLEAF_LDAP_NAME_ATT: 'cn'
-            # OVERLEAF_LDAP_LAST_NAME_ATT: 'sn'
-            # OVERLEAF_LDAP_UPDATE_USER_DETAILS_ON_LOGIN: 'true'
-            # OVERLEAF_TEMPLATES_USER_ID: "578773160210479700917ee5"
-            # OVERLEAF_NEW_PROJECT_TEMPLATE_LINKS: '[ {"name":"All Templates","url":"/templates/all"}]'
-            # OVERLEAF_PROXY_LEARN: "true"
+            # SHARELATEX_LDAP_URL: 'ldap://ldap:389'
+            # SHARELATEX_LDAP_SEARCH_BASE: 'ou=people,dc=planetexpress,dc=com'
+            # SHARELATEX_LDAP_SEARCH_FILTER: '(uid={{username}})'
+            # SHARELATEX_LDAP_BIND_DN: 'cn=admin,dc=planetexpress,dc=com'
+            # SHARELATEX_LDAP_BIND_CREDENTIALS: 'GoodNewsEveryone'
+            # SHARELATEX_LDAP_EMAIL_ATT: 'mail'
+            # SHARELATEX_LDAP_NAME_ATT: 'cn'
+            # SHARELATEX_LDAP_LAST_NAME_ATT: 'sn'
+            # SHARELATEX_LDAP_UPDATE_USER_DETAILS_ON_LOGIN: 'true'
+            # SHARELATEX_TEMPLATES_USER_ID: "578773160210479700917ee5"
+            # SHARELATEX_NEW_PROJECT_TEMPLATE_LINKS: '[ {"name":"All Templates","url":"/templates/all"}]'
+            # SHARELATEX_PROXY_LEARN: "true"
 
     mongo:
         restart: always
         image: mongo:5.0.31
-        container_name: mongo
+        container_name: overleaf-mongo
         command: "--replSet overleaf"
         expose:
             - 27017
         volumes:
-            - "./overleaf/mongo:/data/db"
+            - "/Users/yjrszcq/MyData/docker/overleaf/mongo:/data/db"
         healthcheck:
             test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
             interval: 10s
@@ -135,11 +135,11 @@ services:
     redis:
         restart: always
         image: redis:8.0.2
-        container_name: redis
+        container_name: overleaf-redis
         expose:
             - 6379
         volumes:
-            - ./overleaf/redis:/data
+            - /Users/yjrszcq/MyData/docker/overleaf/redis:/data
 
     # ldap:
     #    restart: always

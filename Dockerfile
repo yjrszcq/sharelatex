@@ -2,7 +2,7 @@ FROM fuckery/sharelatex:5.5.1-arm64-basic
 
 RUN apt update
 
-# from immortal6736/sharelatex:5.0.3 should comment out this line
+# from the images with texlive should comment out this line
 RUN tlmgr install scheme-full
 
 RUN apt install -y latex-cjk-all texlive-lang-chinese texlive-lang-english

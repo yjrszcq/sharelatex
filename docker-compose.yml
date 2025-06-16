@@ -109,7 +109,7 @@ services:
         expose:
             - 27017
         volumes:
-            - "./overleaf/mongo:/data/db"
+            - ./overleaf/mongo:/data/db
         healthcheck:
             test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
             interval: 10s

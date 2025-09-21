@@ -1,4 +1,4 @@
-from sharelatex/sharelatex:5.5.4
+FROM sharelatex/sharelatex:5.5.4
 
 RUN apt update
 

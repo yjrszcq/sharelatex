@@ -1,4 +1,4 @@
-FROM fuckery/sharelatex:5.5.1-arm64-basic
+FROM pibsas/sharelatex-base:5.5.4
 
 RUN apt update
 

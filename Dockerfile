@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:5.5.4
+FROM sharelatex/sharelatex:6.0.0
 
 # 避免 apt 交互
 ENV DEBIAN_FRONTEND=noninteractive

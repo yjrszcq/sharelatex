@@ -25,4 +25,4 @@ jobs:
       with:
         context: .
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/sharelatex:6.0.0
+        tags: ${{ secrets.DOCKER_USERNAME }}/sharelatex:6.0.1

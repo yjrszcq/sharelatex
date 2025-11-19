@@ -24,4 +24,4 @@ RUN tlmgr update --self
 RUN tlmgr install scheme-full
 
 # 5. 确保 TeX Live 2025 的 bin 在 PATH 里
-ENV PATH="/usr/local/texlive/2025/bin/x86_64-linux:${PATH}"
+ENV PATH="/usr/local/texlive/2025/bin/aarch64-linux:${PATH}"

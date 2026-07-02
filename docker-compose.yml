@@ -2,8 +2,8 @@ services:
     sharelatex:
         restart: always
         # Server Pro users:
-        # image: quay.io/sharelatex/sharelatex-pro
         image: szcq/sharelatex:5.4.1
+        # image: szcq/sharelatex:5.0.3-arm64
         container_name: overleaf-sharelatex
         depends_on:
             mongo:

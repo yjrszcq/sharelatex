@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:6.0.1
+FROM sharelatex/sharelatex:6.2.0
 
 # ============================================================
 # TeX Live: 切到 2025 冻结快照,安装完整方案

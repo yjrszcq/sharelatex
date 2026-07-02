@@ -6,7 +6,7 @@ on:
 env:
   IMAGE_OWNER: szcq
   IMAGE_NAME: sharelatex
-  IMAGE_VERSION: 6.2.0
+  IMAGE_VERSION: ${{ vars.IMAGE_VERSION }}
 
 jobs:
   build-amd64:

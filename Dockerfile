@@ -2,10 +2,9 @@ ARG BASE_IMAGE=sharelatex/sharelatex:6.2.0
 FROM ${BASE_IMAGE}
 
 # ============================================================
-# TeX Live: 切到 2025 冻结快照,安装完整方案
+# TeX Live
 # ============================================================
-RUN tlmgr option repository https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/tlnet-final && \
-    tlmgr update --self && \
+RUN tlmgr update --self && \
     tlmgr install scheme-full
 
 # ============================================================

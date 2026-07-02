@@ -89,7 +89,7 @@ DOCKER_SOCKET_PATH=/var/run/docker.sock
 - 仓库里提供了脚本 `install-sharelatex-fonts.sh`，用于在容器已经创建并运行后，手动把字体复制进容器并刷新字体缓存
 - 脚本支持三种输入方式：字体 zip 文件、字体目录、单个字体文件
 - 脚本默认容器名是 `sharelatex`；如果你的容器名不是这个值，需要用 `-c` 指定
-- 当前 [docker-compose.yml](/Users/yjrszcq/MyData/codes/sharelatex/docker-compose.yml:1) 示例里的容器名是 `overleaf-sharelatex`
+- 当前 [docker-compose.yml](docker-compose.yml) 示例里的容器名是 `overleaf-sharelatex`
 
 #### 1. 给脚本执行权限
 ```bash

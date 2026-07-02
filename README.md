@@ -46,18 +46,12 @@ OVERLEAF_PORT=10802 #将该行修改为你所需服务端口，默认为80端口
 5.4.1 #此为szcq/sharelatex镜像的版本，请改为你需要的版本
 ```
 
-#### 7. 初始化 docker 服务
+#### 7. 初始化 docker 服务（包含服务的启动）
 ```
-bin/up
-```
-- 等待一会儿后，`Ctrl + C` 停止
-
-#### 8. 启动 docker 服务
-```
-bin/start
+bin/up -d
 ```
 
-#### 9. 创建管理员账户
+#### 8. 创建管理员账户
 - 进入以下页面，填写邮箱和密码，创建管理员账户
 ```
 http://localhost:服务端口/launchpad
@@ -67,11 +61,17 @@ http://localhost:服务端口/launchpad
 
 #### 1. 若要在 Project 中使用中文，则要在编辑项目时，在左上角的 `MENU` 里，`Compiler` 选择 `XeLaTeX`
 
-#### 2. 停止运行
+#### 2. 开始或停止运行
 - 进入 overleaf-toolkit 目录
 ```
 cd ./overleaf-toolkit
 ```
+
+- 开始运行
+```
+bin/start
+```
+
 - 停止运行
 ```
 bin/stop
@@ -125,8 +125,6 @@ chmod +x ./install-sharelatex-fonts.sh
 - 运行脚本前，请先确认 ShareLaTeX/Overleaf 容器已经启动
 - 如果脚本提示找不到容器，可以先执行 `docker ps --format '{{.Names}}'` 查看实际容器名
 - 导入完成后，新编译的文档即可使用这些字体；如果项目仍识别不到中文字体，优先检查编译器是否为 `XeLaTeX`
-
-
 
 ## 自己制作镜像
 

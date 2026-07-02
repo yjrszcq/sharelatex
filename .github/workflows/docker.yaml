@@ -43,6 +43,8 @@ jobs:
         provenance: false
         build-args: |
           BASE_IMAGE=sharelatex/sharelatex:${{ env.IMAGE_VERSION }}
+          TEXLIVE_YEAR=2026
+          TEXLIVE_BIN_SUBDIR=x86_64-linux
         outputs: type=image,name=${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
 
   build-arm64:
@@ -79,6 +81,8 @@ jobs:
         provenance: false
         build-args: |
           BASE_IMAGE=pibsas/sharelatex:${{ env.IMAGE_VERSION }}
+          TEXLIVE_YEAR=2026
+          TEXLIVE_BIN_SUBDIR=aarch64-linux
         outputs: type=image,name=${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
 
   create-manifest:

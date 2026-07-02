@@ -1,11 +1,23 @@
 ARG BASE_IMAGE=sharelatex/sharelatex:6.2.0
 FROM ${BASE_IMAGE}
 
+ARG TEXLIVE_YEAR=2026
+ARG TEXLIVE_BIN_SUBDIR=x86_64-linux
+
 # ============================================================
 # TeX Live
 # ============================================================
 RUN tlmgr update --self && \
     tlmgr install scheme-full
+
+ENV PATH="/usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}:${PATH}"
+
+RUN ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/biber /usr/local/bin/biber && \
+    ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/bibtex /usr/local/bin/bibtex && \
+    ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/pdflatex /usr/local/bin/pdflatex && \
+    ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/xelatex /usr/local/bin/xelatex && \
+    ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/lualatex /usr/local/bin/lualatex && \
+    ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/latexmk /usr/local/bin/latexmk
 
 # ============================================================
 # 系统字体: 中日韩全家桶 + 常见西文字体

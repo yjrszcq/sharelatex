@@ -84,6 +84,48 @@ SIBLING_CONTAINERS_ENABLED=false
 DOCKER_SOCKET_PATH=/var/run/docker.sock
 ```
 
+### 容器创建后手动添加字体
+
+- 仓库里提供了脚本 `install-sharelatex-fonts.sh`，用于在容器已经创建并运行后，手动把字体复制进容器并刷新字体缓存
+- 脚本支持三种输入方式：字体 zip 文件、字体目录、单个字体文件
+- 脚本默认容器名是 `sharelatex`；如果你的容器名不是这个值，需要用 `-c` 指定
+- 当前 [docker-compose.yml](/Users/yjrszcq/MyData/codes/sharelatex/docker-compose.yml:1) 示例里的容器名是 `overleaf-sharelatex`
+
+#### 1. 给脚本执行权限
+```bash
+chmod +x ./install-sharelatex-fonts.sh
+```
+
+#### 2. 使用 zip 文件导入字体
+```bash
+./install-sharelatex-fonts.sh -z Fonts.zip
+./install-sharelatex-fonts.sh -c overleaf-sharelatex -z Fonts.zip
+```
+
+#### 3. 使用字体目录导入字体
+```bash
+./install-sharelatex-fonts.sh -d Fonts
+./install-sharelatex-fonts.sh -c overleaf-sharelatex -d Fonts
+```
+
+#### 4. 使用单个字体文件导入字体
+```bash
+./install-sharelatex-fonts.sh -f simsun.ttc
+./install-sharelatex-fonts.sh -c overleaf-sharelatex -f simhei.ttf
+```
+
+#### 5. 脚本会做的事情
+
+- 将字体复制到容器内的 `/usr/share/fonts/addfonts`
+- 如果输入的是 zip 文件，会在容器内自动安装 `unzip` 并解压
+- 最后执行 `fc-cache -fv` 刷新字体缓存
+
+#### 6. 注意事项
+
+- 运行脚本前，请先确认 ShareLaTeX/Overleaf 容器已经启动
+- 如果脚本提示找不到容器，可以先执行 `docker ps --format '{{.Names}}'` 查看实际容器名
+- 导入完成后，新编译的文档即可使用这些字体；如果项目仍识别不到中文字体，优先检查编译器是否为 `XeLaTeX`
+
 
 
 ## 自己制作镜像

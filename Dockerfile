@@ -10,7 +10,7 @@ ARG TEXLIVE_BIN_SUBDIR=x86_64-linux
 RUN tlmgr update --self && \
     tlmgr install scheme-full
 
-ENV PATH="/usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}:${PATH}"
+# ENV PATH="/usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}:${PATH}"
 
 RUN ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/biber /usr/local/bin/biber && \
     ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/bibtex /usr/local/bin/bibtex && \

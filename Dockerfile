@@ -1,4 +1,5 @@
-FROM sharelatex/sharelatex:6.2.0
+ARG BASE_IMAGE=sharelatex/sharelatex:6.2.0
+FROM ${BASE_IMAGE}
 
 # ============================================================
 # TeX Live: 切到 2025 冻结快照,安装完整方案

@@ -9,6 +9,22 @@
 
 官方参考：[TeX Live 沙盒镜像与配置](https://github.com/ayaka-notes/texlive-full)、[Toolkit 沙盒配置](https://github.com/ayaka-notes/toolkit/blob/master/doc/overleaf-rc.md)。
 
+## 一步构建
+
+可直接使用仓库根目录的 [build-texlive.sh](../build-texlive.sh)，将现有字体 zip、字体目录或单个字体文件作为输入，无需手动准备本目录的 `fonts/`：
+```bash
+# 在仓库根目录执行；不传 -v 则交互输入官方镜像版本号
+./build-texlive.sh -z /实际路径/wps-office-fonts.zip
+./build-texlive.sh -v 2026.1 -d /实际路径/Fonts
+./build-texlive.sh -b my-texlive:2026.1 -f /实际路径/simsun.ttc -o szcq/texlive-custom:2026.1
+```
+
+选项同时支持长名称：`--version`、`--base-image`、`--output-image`、`--zip`、`--font-dir`、`--font-file`；`-h/--help` 查看帮助。三种字体输入必须三选一，版本号与完整基础镜像名互斥。
+
+脚本在临时目录中准备字体，复用本目录的 Dockerfile 和 `build.sh` 完成镜像检查、必要时拉取和构建。成功后打印完整镜像名；失败时中止，退出时自动清理临时文件。原字体及仓库目录保持原样。zip 方式依赖运行主机的 `unzip`，脚本不自动安装主机软件，也不自动推送镜像。
+
+完成后直接进入下方“配置 Toolkit”。如果需要手动管理本目录的字体和构建过程，也可以按下面步骤操作。
+
 ## 准备字体
 
 进入仓库中的本目录：
@@ -41,12 +57,29 @@ texlive-custom/
 ./build.sh
 ```
 
-按提示输入官方 TeX Live 沙盒镜像的版本号，不设默认输入值。也可以直接传入版本号：
+按提示输入官方 TeX Live 沙盒镜像的版本号，不设默认输入值。也可以通过 `-v/--version` 指定：
 ```bash
-./build.sh 2026.1
+./build.sh -v 2026.1
 ```
 
-脚本会检查本地是否已有 `ghcr.io/ayaka-notes/texlive-full:<版本号>`；没有则先执行 `docker pull`，然后构建并加载 `texlive-custom:<版本号>` 到本地。成功结束后会打印完整镜像名。如果拉取或构建失败，脚本会中止。
+通过 `-b/--base-image` 指定完整基础镜像名，`-o/--output-image` 指定完整输出镜像名：
+```bash
+./build.sh -b ghcr.io/ayaka-notes/texlive-full:2026.1 -o szcq/texlive-custom:2026.1
+```
+
+基础镜像也可以是通过 `docker load` 导入的本地沙盒镜像：
+```bash
+docker load -i texlive-backup.tar
+./build.sh --base-image my-texlive:2026.1 --output-image texlive-custom:2026.1
+```
+
+这里的 `my-texlive:2026.1` 应替换为 `docker load` 后实际显示的镜像名称。输入的基础镜像需兼容 Ayakaleaf 编译沙盒，带有 TeX Live、`tex` 用户及 `fc-cache`。
+
+脚本会检查指定基础镜像是否已在本地；存在则直接使用，没有则先执行 `docker pull`，然后构建并加载输出镜像到本地。使用 `-v/--version` 时，基础镜像为 `ghcr.io/ayaka-notes/texlive-full:<版本号>`；使用 `-b/--base-image` 时，直接使用指定的镜像引用。两者不能同时使用，所有命令行参数均通过选项传入，不接受位置参数。
+
+不指定输出镜像名时，默认生成 `texlive-custom:<基础镜像tag>`，基础镜像未带 tag 时使用 `texlive-custom:latest`。`-o/--output-image` 是输出镜像名，不是 `.tar` 文件路径；需要导出文件时使用下方的 `docker save`。脚本只构建并加载，不自动推送。成功结束后会打印完整输出镜像名；如果拉取或构建失败，脚本会中止。
+
+运行 `./build.sh -h` 或 `./build.sh --help` 可查看全部选项。
 
 脚本使用本目录作为构建上下文，可从其他目录调用。运行脚本的账号需能访问 Docker；构建默认采用当前 Docker builder 对应的平台。官方基础镜像支持 amd64 和 arm64，构建平台应与实际部署平台一致。
 

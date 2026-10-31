@@ -227,7 +227,23 @@ chmod +x ./install-sharelatex-fonts.sh
 
 启用沙盒编译时，字体需要放进独立的 TeX Live 编译镜像，给主容器注入字体不会自动影响沙盒。
 
-仓库提供 [texlive-custom/](texlive-custom/README.md)，包含 Dockerfile、空的 `fonts/` 目录及完整说明。请自行放入字体并构建，再按其 README 配置 Toolkit。主镜像工作流不会自动构建或发布这个沙盒镜像。
+根目录提供 [build-texlive.sh](build-texlive.sh)，指定字体来源即可一步构建沙盒镜像，无需手动复制字体或编写 Dockerfile：
+```bash
+# zip 字体包；省略 -v 时会提示输入官方沙盒镜像版本号
+./build-texlive.sh -v 2026.1 -z /实际路径/wps-office-fonts.zip
+
+# 字体目录
+./build-texlive.sh --version 2026.1 --font-dir /实际路径/Fonts
+
+# 单个字体文件，使用完整基础镜像名和输出镜像名
+./build-texlive.sh -b ghcr.io/ayaka-notes/texlive-full:2026.1 -f /实际路径/simsun.ttc -o szcq/texlive-custom:2026.1
+```
+
+`-z/--zip`、`-d/--font-dir`、`-f/--font-file` 必须三选一。`-v/--version` 与 `-b/--base-image` 互斥；`-o/--output-image` 可选。不指定输出名称时生成 `texlive-custom:<基础镜像tag>`，不带 tag 的基础镜像对应 `texlive-custom:latest`。
+
+脚本复用 [texlive-custom/](texlive-custom/README.md) 中的 Dockerfile 和构建脚本，自动检查基础镜像、本地没有时先拉取，构建成功后打印完整镜像名。字体只复制或解压到临时目录，脚本退出时自动清理；原字体文件及仓库的 `fonts/` 目录保持原样。zip 方式需主机已安装 `unzip`，运行账号需能访问 Docker。脚本只构建并加载镜像到本地，不自动推送。
+
+构建完成后，按 [texlive-custom/README.md](texlive-custom/README.md#配置-toolkit) 配置 Toolkit。也可以手动在 `texlive-custom/fonts/` 放入字体，使用该目录的 `build.sh` 构建。主镜像工作流不会自动构建或发布这个沙盒镜像。
 
 ## 自己制作镜像
 

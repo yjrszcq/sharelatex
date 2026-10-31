@@ -179,36 +179,63 @@ docker compose up -d
 
 从 6.2.x 或更早的 Ayakaleaf 升级且使用了 Zotero/Mendeley 时，还需先执行 [6.3.0 发布说明](https://github.com/ayaka-notes/ayakaleaf-pro/releases/tag/pro-v6.3.0) 中的迁移脚本，见 [6.3.2 升级说明](https://github.com/ayaka-notes/ayakaleaf-pro/releases/tag/pro-v6.3.2)。
 
+## 字体配置
+
+### 交互式字体安装与沙盒构建
+
+在运行 Ayakaleaf 的 Docker 主机上启动根目录的交互脚本：
+```bash
+bash fonts.sh
+```
+
+无需克隆仓库、无需手动保存脚本的远程运行方式：
+```bash
+curl -fsSL https://raw.githubusercontent.com/yjrszcq/sharelatex/master/fonts.sh | bash
+```
+
+远程入口需要仓库中的新脚本已推送到 `master`。脚本先选择语言：英语（默认）或中文，再选择将字体安装到主容器或构建带字体的沙盒镜像。
+
+- 主容器：填写运行中的容器名，再选择 zip、目录或单文件，并输入本机路径。
+- 沙盒：选择官方版本号或完整基础镜像名，可指定输出镜像名，再选择三种字体来源之一；基础镜像本地没有时先拉取，成功后打印生成的镜像名。
+
+路径支持空格，交互输入时无需加引号；可使用绝对路径或相对于当前工作目录的路径。脚本从终端读取输入，支持 `curl ... | bash`，需在交互式终端运行。运行账号需能访问 Docker；沙盒 zip 输入依赖主机上的 `unzip`。
+
+远程模式按需临时获取配套脚本与 Dockerfile，结束或失败时自动清理临时文件，不会保存到当前目录。已有仓库中运行时直接复用本地文件。沙盒构建只加载到本地、不自动推送；完成后仍需按 [沙盒说明](texlive-custom/README.md#配置-toolkit) 配置 Toolkit。
+
+若 Docker 访问需要管理员权限，可先下载后检查脚本并运行 `sudo bash fonts.sh`；普通的 `sudo curl ... | bash` 不会让后面的 Bash 获得管理员权限。
+
+底层脚本仍可通过参数直接使用：`scripts/install-sharelatex-fonts.sh` 和 `scripts/build-texlive.sh`。
+
 ### 主容器内编译：容器创建后手动添加字体
 
 以下脚本适用于使用本仓库主镜像进行主容器内编译（`SIBLING_CONTAINERS_ENABLED=false`）的情况。脚本将字体注入指定的主容器；如果启用了沙盒编译，应按下方“为沙盒添加中文字体”制作独立编译镜像。
 
-- 仓库里提供了脚本 `install-sharelatex-fonts.sh`，用于在容器已经创建并运行后，手动把字体复制进容器并刷新字体缓存
+- 仓库里提供了脚本 `scripts/install-sharelatex-fonts.sh`，用于在容器已经创建并运行后，手动把字体复制进容器并刷新字体缓存
 - 脚本支持三种输入方式：字体 zip 文件、字体目录、单个字体文件
 - 脚本默认容器名是 `sharelatex`；如果你的容器名不是这个值，需要用 `-c` 指定
 - 当前 [docker-compose.yml](docker-compose.yml) 示例里的容器名是 `overleaf-sharelatex`
 
 #### 1. 给脚本执行权限
 ```bash
-chmod +x ./install-sharelatex-fonts.sh
+chmod +x ./scripts/install-sharelatex-fonts.sh
 ```
 
 #### 2. 使用 zip 文件导入字体
 ```bash
-./install-sharelatex-fonts.sh -z Fonts.zip
-./install-sharelatex-fonts.sh -c overleaf-sharelatex -z Fonts.zip
+./scripts/install-sharelatex-fonts.sh -z Fonts.zip
+./scripts/install-sharelatex-fonts.sh -c overleaf-sharelatex -z Fonts.zip
 ```
 
 #### 3. 使用字体目录导入字体
 ```bash
-./install-sharelatex-fonts.sh -d Fonts
-./install-sharelatex-fonts.sh -c overleaf-sharelatex -d Fonts
+./scripts/install-sharelatex-fonts.sh -d Fonts
+./scripts/install-sharelatex-fonts.sh -c overleaf-sharelatex -d Fonts
 ```
 
 #### 4. 使用单个字体文件导入字体
 ```bash
-./install-sharelatex-fonts.sh -f simsun.ttc
-./install-sharelatex-fonts.sh -c overleaf-sharelatex -f simhei.ttf
+./scripts/install-sharelatex-fonts.sh -f simsun.ttc
+./scripts/install-sharelatex-fonts.sh -c overleaf-sharelatex -f simhei.ttf
 ```
 
 #### 5. 脚本会做的事情
@@ -227,16 +254,16 @@ chmod +x ./install-sharelatex-fonts.sh
 
 启用沙盒编译时，字体需要放进独立的 TeX Live 编译镜像，给主容器注入字体不会自动影响沙盒。
 
-根目录提供 [build-texlive.sh](build-texlive.sh)，指定字体来源即可一步构建沙盒镜像，无需手动复制字体或编写 Dockerfile：
+`scripts/` 提供 [build-texlive.sh](scripts/build-texlive.sh)，指定字体来源即可一步构建沙盒镜像，无需手动复制字体或编写 Dockerfile：
 ```bash
 # zip 字体包；省略 -v 时会提示输入官方沙盒镜像版本号
-./build-texlive.sh -v 2026.1 -z /实际路径/wps-office-fonts.zip
+./scripts/build-texlive.sh -v 2026.1 -z /实际路径/wps-office-fonts.zip
 
 # 字体目录
-./build-texlive.sh --version 2026.1 --font-dir /实际路径/Fonts
+./scripts/build-texlive.sh --version 2026.1 --font-dir /实际路径/Fonts
 
 # 单个字体文件，使用完整基础镜像名和输出镜像名
-./build-texlive.sh -b ghcr.io/ayaka-notes/texlive-full:2026.1 -f /实际路径/simsun.ttc -o szcq/texlive-custom:2026.1
+./scripts/build-texlive.sh -b ghcr.io/ayaka-notes/texlive-full:2026.1 -f /实际路径/simsun.ttc -o szcq/texlive-custom:2026.1
 ```
 
 `-z/--zip`、`-d/--font-dir`、`-f/--font-file` 必须三选一。`-v/--version` 与 `-b/--base-image` 互斥；`-o/--output-image` 可选。不指定输出名称时生成 `texlive-custom:<基础镜像tag>`，不带 tag 的基础镜像对应 `texlive-custom:latest`。

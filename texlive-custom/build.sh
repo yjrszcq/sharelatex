@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+msg() {
+    if [ "${SCRIPT_LANG:-zh}" = en ]; then printf '%s\n' "$1"; else printf '%s\n' "$2"; fi
+}
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 VERSION=""
 BASE_IMAGE=""
@@ -24,7 +28,7 @@ EOF
 
 require_value() {
     if [ "$#" -lt 2 ] || [[ -z "$2" || "$2" == -* ]]; then
-        echo "错误：$1 缺少参数值" >&2
+        msg "Error: missing value for $1" "错误：$1 缺少参数值" >&2
         exit 1
     fi
 }
@@ -51,30 +55,34 @@ while [ "$#" -gt 0 ]; do
             exit 0
             ;;
         *)
-            echo "错误：未知参数 $1，请使用 -h 查看帮助" >&2
+            msg "Error: unknown option $1; use -h for help" "错误：未知参数 $1，请使用 -h 查看帮助" >&2
             exit 1
             ;;
     esac
 done
 
 if [[ -n "$VERSION" && -n "$BASE_IMAGE" ]]; then
-    echo "错误：-v/--version 与 -b/--base-image 不能同时使用" >&2
+    msg "Error: --version and --base-image cannot be used together" "错误：-v/--version 与 -b/--base-image 不能同时使用" >&2
     exit 1
 fi
 
 if [[ -z "$VERSION" && -z "$BASE_IMAGE" ]]; then
-    read -r -p "请输入官方 TeX Live 沙盒镜像版本号：" VERSION
+    if [ "${SCRIPT_LANG:-zh}" = en ]; then
+        read -r -p "Official TeX Live sandbox image version tag: " VERSION
+    else
+        read -r -p "请输入官方 TeX Live 沙盒镜像版本号：" VERSION
+    fi
 fi
 
 if [[ -z "$BASE_IMAGE" ]]; then
     if [[ ! "$VERSION" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$ ]]; then
-        echo "错误：请输入有效的镜像版本 tag" >&2
+        msg "Error: enter a valid image version tag" "错误：请输入有效的镜像版本 tag" >&2
         exit 1
     fi
     BASE_IMAGE="ghcr.io/ayaka-notes/texlive-full:$VERSION"
 else
     if [[ "$BASE_IMAGE" == -* || "$BASE_IMAGE" == *[[:space:]]* ]]; then
-        echo "错误：请输入有效的基础镜像名" >&2
+        msg "Error: enter a valid base image name" "错误：请输入有效的基础镜像名" >&2
         exit 1
     fi
     IMAGE_REF="${BASE_IMAGE%@*}"
@@ -88,14 +96,14 @@ fi
 
 IMAGE_NAME="${IMAGE_NAME:-texlive-custom:$VERSION}"
 if [[ "$IMAGE_NAME" == -* || "$IMAGE_NAME" == *[[:space:]]* || "$IMAGE_NAME" == *@* ]]; then
-    echo "错误：请输入有效的输出镜像名（名称或名称:tag）" >&2
+    msg "Error: enter a valid output image name (name or name:tag)" "错误：请输入有效的输出镜像名（名称或名称:tag）" >&2
     exit 1
 fi
 
 docker info >/dev/null
 
 if ! docker image inspect "$BASE_IMAGE" >/dev/null 2>&1; then
-    echo "本地没有基础镜像，开始拉取：$BASE_IMAGE"
+    msg "Base image not found locally; pulling: $BASE_IMAGE" "本地没有基础镜像，开始拉取：$BASE_IMAGE"
     docker pull "$BASE_IMAGE"
 fi
 
@@ -104,4 +112,4 @@ docker build --load \
     -t "$IMAGE_NAME" \
     "$SCRIPT_DIR"
 
-printf '\n构建完成，镜像名：%s\n' "$IMAGE_NAME"
+msg "Build complete. Image: $IMAGE_NAME" "构建完成，镜像名：$IMAGE_NAME"

@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+msg() {
+    if [ "${SCRIPT_LANG:-zh}" = en ]; then printf '%s\n' "$1"; else printf '%s\n' "$2"; fi
+}
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 VERSION=""
 BASE_IMAGE=""
 IMAGE_NAME=""
@@ -31,7 +36,7 @@ EOF
 
 require_value() {
     if [ "$#" -lt 2 ] || [[ -z "$2" || "$2" == -* ]]; then
-        echo "错误：$1 缺少参数值" >&2
+        msg "Error: missing value for $1" "错误：$1 缺少参数值" >&2
         exit 1
     fi
 }
@@ -56,7 +61,7 @@ while [ "$#" -gt 0 ]; do
         -z|--zip|-d|--font-dir|-f|--font-file)
             require_value "$@"
             if [ -n "$FONT_MODE" ]; then
-                echo "错误：-z、-d、-f 必须三选一" >&2
+                msg "Error: choose exactly one of -z, -d and -f" "错误：-z、-d、-f 必须三选一" >&2
                 exit 1
             fi
             FONT_MODE="$1"
@@ -68,39 +73,39 @@ while [ "$#" -gt 0 ]; do
             exit 0
             ;;
         *)
-            echo "错误：未知参数 $1，请使用 -h 查看帮助" >&2
+            msg "Error: unknown option $1; use -h for help" "错误：未知参数 $1，请使用 -h 查看帮助" >&2
             exit 1
             ;;
     esac
 done
 
 if [[ -n "$VERSION" && -n "$BASE_IMAGE" ]]; then
-    echo "错误：-v/--version 与 -b/--base-image 不能同时使用" >&2
+    msg "Error: --version and --base-image cannot be used together" "错误：-v/--version 与 -b/--base-image 不能同时使用" >&2
     exit 1
 fi
 
 case "$FONT_MODE" in
     -d|--font-dir)
         if [ ! -d "$FONT_SOURCE" ]; then
-            echo "错误：找不到字体目录 $FONT_SOURCE" >&2
+            msg "Error: font directory not found: $FONT_SOURCE" "错误：找不到字体目录 $FONT_SOURCE" >&2
             exit 1
         fi
         ;;
     -z|--zip|-f|--font-file)
         if [ ! -f "$FONT_SOURCE" ]; then
-            echo "错误：找不到字体文件 $FONT_SOURCE" >&2
+            msg "Error: font file not found: $FONT_SOURCE" "错误：找不到字体文件 $FONT_SOURCE" >&2
             exit 1
         fi
         ;;
     *)
-        echo "错误：必须指定 -z、-d、-f 其中一种字体来源" >&2
+        msg "Error: specify one font source using -z, -d or -f" "错误：必须指定 -z、-d、-f 其中一种字体来源" >&2
         exit 1
         ;;
 esac
 
 if [[ "$FONT_MODE" == -z || "$FONT_MODE" == --zip ]]; then
     if ! command -v unzip >/dev/null 2>&1; then
-        echo "错误：请先在运行脚本的主机上安装 unzip" >&2
+        msg "Error: install unzip on this host first" "错误：请先在运行脚本的主机上安装 unzip" >&2
         exit 1
     fi
 fi
@@ -110,7 +115,7 @@ trap 'rm -rf "$TEMP_DIR"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 mkdir -p "$TEMP_DIR/fonts"
-cp "$SCRIPT_DIR/texlive-custom/Dockerfile" "$SCRIPT_DIR/texlive-custom/build.sh" "$TEMP_DIR/"
+cp "$REPO_DIR/texlive-custom/Dockerfile" "$REPO_DIR/texlive-custom/build.sh" "$TEMP_DIR/"
 
 case "$FONT_MODE" in
     -z|--zip) unzip -o "$FONT_SOURCE" -d "$TEMP_DIR/fonts/" ;;

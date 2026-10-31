@@ -4,19 +4,21 @@
 
 本仓库有两种编译方式：
 
-- 主容器内编译：使用仓库根目录的主镜像，`SIBLING_CONTAINERS_ENABLED=false`。可通过根目录的 `install-sharelatex-fonts.sh` 给运行中的主容器注入字体。
+- 主容器内编译：使用仓库根目录的主镜像，`SIBLING_CONTAINERS_ENABLED=false`。可通过 `scripts/install-sharelatex-fonts.sh` 给运行中的主容器注入字体。
 - 沙盒编译：`SIBLING_CONTAINERS_ENABLED=true`，使用独立的 TeX Live 编译镜像。给主容器注入字体不会自动影响沙盒，需使用本目录构建带字体的编译镜像。
 
 官方参考：[TeX Live 沙盒镜像与配置](https://github.com/ayaka-notes/texlive-full)、[Toolkit 沙盒配置](https://github.com/ayaka-notes/toolkit/blob/master/doc/overleaf-rc.md)。
 
+根目录的 [fonts.sh](../fonts.sh) 提供英语（默认）/中文交互菜单，可选择主容器或沙盒并填写字体来源；远程运行命令见 [主 README](../README.md#交互式字体安装与沙盒构建)。
+
 ## 一步构建
 
-可直接使用仓库根目录的 [build-texlive.sh](../build-texlive.sh)，将现有字体 zip、字体目录或单个字体文件作为输入，无需手动准备本目录的 `fonts/`：
+可直接使用仓库 `scripts/` 下的 [build-texlive.sh](../scripts/build-texlive.sh)，将现有字体 zip、字体目录或单个字体文件作为输入，无需手动准备本目录的 `fonts/`：
 ```bash
 # 在仓库根目录执行；不传 -v 则交互输入官方镜像版本号
-./build-texlive.sh -z /实际路径/wps-office-fonts.zip
-./build-texlive.sh -v 2026.1 -d /实际路径/Fonts
-./build-texlive.sh -b my-texlive:2026.1 -f /实际路径/simsun.ttc -o szcq/texlive-custom:2026.1
+./scripts/build-texlive.sh -z /实际路径/wps-office-fonts.zip
+./scripts/build-texlive.sh -v 2026.1 -d /实际路径/Fonts
+./scripts/build-texlive.sh -b my-texlive:2026.1 -f /实际路径/simsun.ttc -o szcq/texlive-custom:2026.1
 ```
 
 选项同时支持长名称：`--version`、`--base-image`、`--output-image`、`--zip`、`--font-dir`、`--font-file`；`-h/--help` 查看帮助。三种字体输入必须三选一，版本号与完整基础镜像名互斥。

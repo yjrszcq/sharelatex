@@ -157,7 +157,7 @@ SIBLING_CONTAINERS_ENABLED=false
 DOCKER_SOCKET_PATH=/var/run/docker.sock
 ```
 
-若改为沙盒编译，需要按 [官方说明](https://github.com/ayaka-notes/toolkit) 配置独立的 TeX Live 镜像；主容器的字体不会自动传入沙盒。
+若改为沙盒编译，请按下方“为沙盒添加中文字体”配置独立的 TeX Live 镜像；主容器的字体不会自动传入沙盒。
 
 ### 使用 Docker Compose
 
@@ -179,7 +179,9 @@ docker compose up -d
 
 从 6.2.x 或更早的 Ayakaleaf 升级且使用了 Zotero/Mendeley 时，还需先执行 [6.3.0 发布说明](https://github.com/ayaka-notes/ayakaleaf-pro/releases/tag/pro-v6.3.0) 中的迁移脚本，见 [6.3.2 升级说明](https://github.com/ayaka-notes/ayakaleaf-pro/releases/tag/pro-v6.3.2)。
 
-### 容器创建后手动添加字体
+### 主容器内编译：容器创建后手动添加字体
+
+以下脚本适用于使用本仓库主镜像进行主容器内编译（`SIBLING_CONTAINERS_ENABLED=false`）的情况。脚本将字体注入指定的主容器；如果启用了沙盒编译，应按下方“为沙盒添加中文字体”制作独立编译镜像。
 
 - 仓库里提供了脚本 `install-sharelatex-fonts.sh`，用于在容器已经创建并运行后，手动把字体复制进容器并刷新字体缓存
 - 脚本支持三种输入方式：字体 zip 文件、字体目录、单个字体文件
@@ -220,6 +222,12 @@ chmod +x ./install-sharelatex-fonts.sh
 - 运行脚本前，请先确认 Ayakaleaf Pro 容器已经启动
 - 如果脚本提示找不到容器，可以先执行 `docker ps --format '{{.Names}}'` 查看实际容器名
 - 导入完成后，新编译的文档即可使用这些字体；如果项目仍识别不到中文字体，优先检查编译器是否为 `XeLaTeX`
+
+### 为沙盒添加中文字体
+
+启用沙盒编译时，字体需要放进独立的 TeX Live 编译镜像，给主容器注入字体不会自动影响沙盒。
+
+仓库提供 [texlive-custom/](texlive-custom/README.md)，包含 Dockerfile、空的 `fonts/` 目录及完整说明。请自行放入字体并构建，再按其 README 配置 Toolkit。主镜像工作流不会自动构建或发布这个沙盒镜像。
 
 ## 自己制作镜像
 

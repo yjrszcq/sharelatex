@@ -76,6 +76,60 @@ bin/up -d
 http://localhost:服务端口/launchpad
 ```
 
+### 使用 Overleaf 官方 Toolkit
+
+也可以使用 [Overleaf 官方 Toolkit](https://github.com/overleaf/toolkit)。官方通过 `OVERLEAF_IMAGE_NAME` 指定自定义镜像，再拼接 `config/version` 中的版本号，见 [官方镜像选择逻辑](https://github.com/overleaf/toolkit/blob/master/lib/shared-functions.sh)。以下配置使用主容器内的完整 TeX Live 和字体。
+
+#### 1. 获取并初始化工具包
+
+新部署执行：
+```bash
+git clone https://github.com/overleaf/toolkit.git ./overleaf-toolkit
+cd ./overleaf-toolkit
+bin/init
+```
+
+已有官方 Toolkit 的部署直接编辑现有配置，保留原数据路径；升级前先阅读下方“已有实例升级”。
+
+#### 2. 编辑 `config/overleaf.rc`
+
+修改对应配置项，其他数据路径、端口及 Redis 配置按现有部署保留：
+```ini
+OVERLEAF_IMAGE_NAME=szcq/sharelatex
+SERVER_PRO=true
+SIBLING_CONTAINERS_ENABLED=false
+GIT_BRIDGE_ENABLED=false
+MONGO_IMAGE=mongo
+MONGO_VERSION=8.0
+```
+
+`OVERLEAF_IMAGE_NAME` 只填写镜像名称，不带版本号。`SIBLING_CONTAINERS_ENABLED=false` 使用本镜像内的 TeX Live 和字体，无需为编译挂载 Docker socket。若启用 Git Bridge 或沙盒编译，需要另行配置对应的 Ayakaleaf 服务/编译镜像。
+
+#### 3. 编辑 `config/version`
+
+填写已经构建并推送到 Docker Hub 的版本号：
+```text
+6.3.2
+```
+
+上述配置最终使用 `szcq/sharelatex:6.3.2`；部署版本应与运行 GitHub 工作流时填写的 `image_version` 一致。
+
+#### 4. 配置邀请令牌密钥
+
+运行 `openssl rand -base64 32`，将输出保存到 `config/variables.env`，不要提交密钥：
+```ini
+OVERLEAF_INVITE_TOKEN_SECRET=生成的密钥
+```
+
+#### 5. 启动
+
+在 Toolkit 根目录执行：
+```bash
+bin/up -d
+```
+
+然后按上方步骤访问 `/launchpad` 创建管理员账户。此方式已核对官方 Toolkit 的配置逻辑，尚未实际启动验证；已有 MongoDB 5.x 数据仍需先逐级升级。
+
 ### 注意事项
 
 #### 1. 若要在 Project 中使用中文，则要在编辑项目时，在左上角的 `MENU` 里，`Compiler` 选择 `XeLaTeX`

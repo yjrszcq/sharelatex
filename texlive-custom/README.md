@@ -25,6 +25,7 @@ unzip /实际路径/wps-office-fonts.zip -d fonts/
 ```text
 texlive-custom/
 ├── Dockerfile
+├── build.sh
 ├── README.md
 └── fonts/
     └── wps-office/
@@ -35,14 +36,21 @@ texlive-custom/
 
 ## 构建镜像
 
-在本目录执行：
+准备好 `fonts/` 后运行：
 ```bash
-docker build -t texlive-custom:2026.1 .
+./build.sh
 ```
 
-默认构建当前 Docker builder 对应架构。官方基础镜像支持 amd64 和 arm64；如需明确指定部署架构，可添加 `--platform linux/amd64` 或 `--platform linux/arm64`。
+按提示输入官方 TeX Live 沙盒镜像的版本号，不设默认输入值。也可以直接传入版本号：
+```bash
+./build.sh 2026.1
+```
 
-TeX Live 镜像版本 `2026.1` 与 Ayakaleaf 主镜像版本（如 `6.3.2`）分别管理。
+脚本会检查本地是否已有 `ghcr.io/ayaka-notes/texlive-full:<版本号>`；没有则先执行 `docker pull`，然后构建并加载 `texlive-custom:<版本号>` 到本地。成功结束后会打印完整镜像名。如果拉取或构建失败，脚本会中止。
+
+脚本使用本目录作为构建上下文，可从其他目录调用。运行脚本的账号需能访问 Docker；构建默认采用当前 Docker builder 对应的平台。官方基础镜像支持 amd64 和 arm64，构建平台应与实际部署平台一致。
+
+以下部署示例以输入 `2026.1` 为例，实际使用时请替换为脚本打印的镜像名。这里的 TeX Live 镜像版本与 Ayakaleaf 主镜像版本分别管理。
 
 验证镜像能列出中文字体：
 ```bash

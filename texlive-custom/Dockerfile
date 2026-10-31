@@ -1,4 +1,5 @@
-FROM ghcr.io/ayaka-notes/texlive-full:2026.1
+ARG TEXLIVE_VERSION=2026.1
+FROM ghcr.io/ayaka-notes/texlive-full:${TEXLIVE_VERSION}
 
 USER root
 COPY fonts/ /usr/share/fonts/addfonts/

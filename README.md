@@ -226,7 +226,7 @@ chmod +x ./install-sharelatex-fonts.sh
 ### 配置 GitHub Actions
 
 - 保留工作流 `.github/workflows/docker.yaml`，通过 `workflow_dispatch` 手动触发。
-- 在 `Actions → Build and Push Docker Image → Run workflow` 中填写必填输入 `image_version`，默认 `6.3.2`。工作流直接使用输入值作为官方基础镜像版本和发布标签，无需配置仓库变量 `IMAGE_VERSION`；使用 `X.Y.Z` 格式，并确认该官方标签支持两种架构。
+- 在 `Actions → Build and Push Docker Image → Run workflow` 中填写必填输入 `image_version`。工作流直接使用输入值作为官方基础镜像版本和发布标签，无需配置仓库变量 `IMAGE_VERSION`；使用 `X.Y.Z` 格式，并确认该官方标签支持两种架构。
 - 在 `Secrets` 设置 `DOCKER_TOKEN`，值为可向 `szcq/sharelatex` 推送的 Docker Hub 访问令牌。
 - 镜像账号和名称继续由工作流中的 `IMAGE_OWNER: szcq`、`IMAGE_NAME: sharelatex` 决定；发布到自己的账号时修改这两项。
 

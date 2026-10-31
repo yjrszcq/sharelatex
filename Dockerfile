@@ -1,10 +1,9 @@
-ARG BASE_IMAGE=ghcr.io/ayaka-notes/overleaf-pro:6.3.2
-FROM ${BASE_IMAGE}
+ARG IMAGE_VERSION=6.3.2
+FROM ghcr.io/ayaka-notes/overleaf-pro:${IMAGE_VERSION}
 
 ARG TEXLIVE_YEAR=2026
 ARG TARGETARCH
-# 可显式覆盖；默认按 buildx 的目标架构选择 TeX Live 二进制目录。
-ARG TEXLIVE_BIN_SUBDIR
+ARG TEXLIVE_BIN_SUBDIR=x86_64-linux
 
 # ============================================================
 # TeX Live
@@ -12,15 +11,9 @@ ARG TEXLIVE_BIN_SUBDIR
 RUN tlmgr update --self && \
     tlmgr install scheme-full
 
-RUN set -eu; \
-    if [ -z "${TEXLIVE_BIN_SUBDIR:-}" ]; then \
-        case "${TARGETARCH}" in \
-            amd64) TEXLIVE_BIN_SUBDIR=x86_64-linux ;; \
-            arm64) TEXLIVE_BIN_SUBDIR=aarch64-linux ;; \
-            *) echo "Unsupported target architecture: ${TARGETARCH}" >&2; exit 1 ;; \
-        esac; \
-    fi; \
-    test -x /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/biber; \
+RUN if [ "${TARGETARCH}" = "arm64" ]; then \
+        TEXLIVE_BIN_SUBDIR=aarch64-linux; \
+    fi && \
     ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/biber /usr/local/bin/biber
 
 # ============================================================

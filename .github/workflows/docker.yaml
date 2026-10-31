@@ -56,6 +56,6 @@ jobs:
         push: true
         provenance: false
         build-args: |
-          BASE_IMAGE=ghcr.io/ayaka-notes/overleaf-pro:${{ env.IMAGE_VERSION }}
+          IMAGE_VERSION=${{ env.IMAGE_VERSION }}
           TEXLIVE_YEAR=2026
         tags: ${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}

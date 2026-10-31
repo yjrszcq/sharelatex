@@ -232,10 +232,10 @@ chmod +x ./install-sharelatex-fonts.sh
 
 ### 更新版本信息
 
-- 修改 `Dockerfile` 的 `ARG BASE_IMAGE=ghcr.io/ayaka-notes/overleaf-pro:6.3.2`，作为本地构建的默认基础镜像。
+- 基础镜像地址固定为 `ghcr.io/ayaka-notes/overleaf-pro`，仅通过 `IMAGE_VERSION` 指定 tag。Dockerfile 的 `ARG IMAGE_VERSION=6.3.2` 是本地构建的默认版本，可通过 `--build-arg IMAGE_VERSION=<版本号>` 覆盖。
 - 运行工作流时填写对应的 `image_version`，部署时同步更新本文及 Compose/Toolkit 的镜像标签。
 - 当前 `TEXLIVE_YEAR=2026`；更换基础镜像时检查其 TeX Live 年份，必要时同步更新 Dockerfile 和工作流。
-- `TEXLIVE_BIN_SUBDIR` 默认根据 `TARGETARCH` 自动选择 `x86_64-linux` 或 `aarch64-linux`，并验证 biber 存在。不要在多架构构建中固定为某一种架构。
+- `TEXLIVE_BIN_SUBDIR` 默认使用 amd64 的 `x86_64-linux`，仅在 `TARGETARCH=arm64` 时改为 `aarch64-linux`。
 
 ### 编译镜像
 
@@ -244,7 +244,7 @@ chmod +x ./install-sharelatex-fonts.sh
 本地需要构建并推送时（需先 `docker login`，并具备支持双架构的 Buildx builder/QEMU）：
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 \
-  --build-arg BASE_IMAGE=ghcr.io/ayaka-notes/overleaf-pro:6.3.2 \
+  --build-arg IMAGE_VERSION=6.3.2 \
   --build-arg TEXLIVE_YEAR=2026 \
   -t szcq/sharelatex:6.3.2 --push .
 ```

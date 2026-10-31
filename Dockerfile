@@ -13,7 +13,7 @@ RUN tlmgr update --self && \
     tlmgr install scheme-full
 
 RUN set -eu; \
-    if [ -z "${TEXLIVE_BIN_SUBDIR}" ]; then \
+    if [ -z "${TEXLIVE_BIN_SUBDIR:-}" ]; then \
         case "${TARGETARCH}" in \
             amd64) TEXLIVE_BIN_SUBDIR=x86_64-linux ;; \
             arm64) TEXLIVE_BIN_SUBDIR=aarch64-linux ;; \

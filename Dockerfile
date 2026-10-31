@@ -1,8 +1,10 @@
-ARG BASE_IMAGE=sharelatex/sharelatex:6.2.0
+ARG BASE_IMAGE=ghcr.io/ayaka-notes/overleaf-pro:6.3.2
 FROM ${BASE_IMAGE}
 
 ARG TEXLIVE_YEAR=2026
-ARG TEXLIVE_BIN_SUBDIR=x86_64-linux
+ARG TARGETARCH
+# 可显式覆盖；默认按 buildx 的目标架构选择 TeX Live 二进制目录。
+ARG TEXLIVE_BIN_SUBDIR
 
 # ============================================================
 # TeX Live
@@ -10,7 +12,16 @@ ARG TEXLIVE_BIN_SUBDIR=x86_64-linux
 RUN tlmgr update --self && \
     tlmgr install scheme-full
 
-RUN ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/biber /usr/local/bin/biber
+RUN set -eu; \
+    if [ -z "${TEXLIVE_BIN_SUBDIR}" ]; then \
+        case "${TARGETARCH}" in \
+            amd64) TEXLIVE_BIN_SUBDIR=x86_64-linux ;; \
+            arm64) TEXLIVE_BIN_SUBDIR=aarch64-linux ;; \
+            *) echo "Unsupported target architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+        esac; \
+    fi; \
+    test -x /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/biber; \
+    ln -sf /usr/local/texlive/${TEXLIVE_YEAR}/bin/${TEXLIVE_BIN_SUBDIR}/biber /usr/local/bin/biber
 
 # ============================================================
 # 系统字体: 中日韩全家桶 + 常见西文字体
@@ -54,7 +65,7 @@ RUN apt-get update && \
 # ============================================================
 # 注意: Windows 字体有版权,仅限自用。如果要公开分发镜像,
 # 请删除这段,改用 Windows 机器本地挂载字体目录的方式。
-# 用法: 把 win-fonts/ 目录放到 Dockerfile 同级,里面放:
+# 用法: 把 fonts/ 目录放到 Dockerfile 同级,里面放:
 #   simsun.ttc  simhei.ttf  simkai.ttf  simfang.ttf
 #   (可从 C:\Windows\Fonts 复制)
 # 如果没有这些字体,下面这两行会报错,可以注释掉。

@@ -1,13 +1,14 @@
 services:
     sharelatex:
         restart: always
-        # Server Pro users:
-        image: szcq/sharelatex:5.4.1
-        # image: szcq/sharelatex:5.0.3-arm64
+        # Ayakaleaf Pro + TeX Live full；同一标签自动选择 amd64 / arm64
+        image: szcq/sharelatex:6.3.2
         container_name: overleaf-sharelatex
         depends_on:
             mongo:
                 condition: service_healthy
+            mongoinit:
+                condition: service_completed_successfully
             redis:
                 condition: service_started
         ports:
@@ -27,8 +28,14 @@ services:
             # - /var/run/docker.sock:/var/run/docker.sock
         environment:
 
-            OVERLEAF_APP_NAME: Overleaf Community Edition
-            OVERLEAF_MONGO_URL: mongodb://mongo/sharelatex
+            OVERLEAF_APP_NAME: Ayakaleaf Pro
+            OVERLEAF_MONGO_URL: mongodb://mongo/sharelatex?replicaSet=overleaf
+            # 在 .env 中设置：openssl rand -base64 32
+            OVERLEAF_INVITE_TOKEN_SECRET: ${OVERLEAF_INVITE_TOKEN_SECRET:?Set OVERLEAF_INVITE_TOKEN_SECRET in .env}
+            # 使用主容器内的 TeX Live 和字体
+            SANDBOXED_COMPILES: 'false'
+            SANDBOXED_COMPILES_SIBLING_CONTAINERS: 'false'
+            DOCKER_RUNNER: 'false'
 
             # Same property, unfortunately with different names in
             # different locations
@@ -42,10 +49,6 @@ services:
 
             # Disables email confirmation requirement
             EMAIL_CONFIRMATION_DISABLED: 'true'
-
-            # temporary fix for LuaLaTex compiles
-            # see https://github.com/overleaf/overleaf/issues/695
-            TEXMFVAR: /var/lib/sharelatex/tmp/texmf-var
 
             ## Set for SSL via nginx-proxy
             #VIRTUAL_HOST: 103.112.212.22
@@ -80,12 +83,7 @@ services:
             ## Server Pro ##
             ################
 
-            # SANDBOXED_COMPILES: 'true'
-
-            # SANDBOXED_COMPILES_SIBLING_CONTAINERS: 'true'
-            # SANDBOXED_COMPILES_HOST_DIR: '/var/sharelatex_data/data/compiles'
-
-            # DOCKER_RUNNER: 'false'
+            # 如需沙盒编译，请按官方文档另配 TeX Live 编译镜像和宿主路径。
 
             ## Works with test LDAP server shown at bottom of docker compose
             # OVERLEAF_LDAP_URL: 'ldap://ldap:389'
@@ -101,9 +99,10 @@ services:
             # OVERLEAF_NEW_PROJECT_TEMPLATE_LINKS: '[ {"name":"All Templates","url":"/templates/all"}]'
             # OVERLEAF_PROXY_LEARN: "true"
 
+    # 新部署使用 MongoDB 8.0；已有 5.x 数据请先按 README 逐级升级。
     mongo:
         restart: always
-        image: mongo:5.0.31
+        image: mongo:8.0
         container_name: overleaf-mongo
         command: "--replSet overleaf"
         expose:
@@ -111,13 +110,13 @@ services:
         volumes:
             - ./overleaf/mongo:/data/db
         healthcheck:
-            test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
+            test: echo 'db.stats().ok' | mongosh localhost:27017/test --quiet
             interval: 10s
             timeout: 10s
             retries: 5
 
     mongoinit:
-        image: mongo:5.0.31
+        image: mongo:8.0
         # this container will exit after executing the command
         restart: "no"
         depends_on:
@@ -125,11 +124,11 @@ services:
                 condition: service_healthy
         entrypoint:
             [
-                "mongo",
+                "mongosh",
                 "--host",
                 "mongo:27017",
                 "--eval",
-                'rs.initiate({ _id: "overleaf", members: [ { _id: 0, host: "mongo:27017" } ] })',
+                'try { rs.status() } catch (e) { if (e.codeName !== "NotYetInitialized") throw e; rs.initiate({ _id: "overleaf", members: [ { _id: 0, host: "mongo:27017" } ] }) }',
             ]
 
     redis:

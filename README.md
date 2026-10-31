@@ -1,14 +1,18 @@
-# Sharelatex 部署说明
+# Ayakaleaf Pro 部署说明
+
+本镜像基于 `ghcr.io/ayaka-notes/overleaf-pro:6.3.2`，保留完整 TeX Live 2026、系统中文字体及 `fonts/` 扩展。发布名称仍为 `szcq/sharelatex`，同一版本标签支持 `linux/amd64` 和 `linux/arm64`，无需架构后缀。
+
+官方参考：[Ayakaleaf Pro 6.3.2](https://github.com/ayaka-notes/ayakaleaf-pro/releases/tag/pro-v6.3.2)、[Ayaka Toolkit](https://github.com/ayaka-notes/toolkit)。
 
 ## 使用此镜像
 
-### 安装并配置 Overleaf
+### 安装并配置 Ayakaleaf Pro
 
-> Overleaf Toolkit 部署
+> Ayaka Toolkit 部署
 
-#### 1. 拉取 Overleaf Toolkit 工具包
+#### 1. 拉取 Ayaka Toolkit 工具包
 ```
-git clone https://github.com/overleaf/toolkit.git ./overleaf-toolkit
+git clone https://github.com/ayaka-notes/toolkit.git ./overleaf-toolkit
 ```
 
 #### 2. 进入 overleaf-toolkit 目录
@@ -32,10 +36,13 @@ cd config
 
 #### 5. 编辑文件 `overleaf.rc`
 ```
-# Sharelatex container
+# Ayakaleaf Pro container
 OVERLEAF_IMAGE_NAME=szcq/sharelatex #更改镜像
 OVERLEAF_DATA_PATH=/mydata/docker/overleaf/overleaf #数据的保存路径
-SERVER_PRO=false
+SERVER_PRO=true
+SIBLING_CONTAINERS_ENABLED=false #使用主容器内的 TeX Live 和字体
+GIT_BRIDGE_ENABLED=false #如需 Git Bridge，按官方文档另行配置
+MONGO_VERSION=8.0
 OVERLEAF_LISTEN_IP=0.0.0.0 #如果不需要外部可访问，则填127.0.0.1
 OVERLEAF_PORT=10802 #将该行修改为你所需服务端口，默认为80端口
 ```
@@ -43,10 +50,22 @@ OVERLEAF_PORT=10802 #将该行修改为你所需服务端口，默认为80端口
 
 #### 6. 编辑文件 `version`
 ```
-5.4.1 #此为szcq/sharelatex镜像的版本，请改为你需要的版本
+6.3.2
 ```
 
-#### 7. 初始化并启动 docker 服务
+#### 7. 配置必需的邀请令牌密钥并启动
+
+运行 `openssl rand -base64 32`，将输出保存到 `config/variables.env`（不要提交密钥）：
+```ini
+OVERLEAF_INVITE_TOKEN_SECRET=生成的密钥
+```
+
+回到工具包根目录启动：
+```bash
+cd ..
+```
+
+初始化并启动 docker 服务
 ```
 bin/up -d
 ```
@@ -77,12 +96,34 @@ bin/start
 bin/stop
 ```
 
-#### 3. 如果不是 pro 用户，则文件 `overleaf.rc` 里的 Sibling Containers 需要为 `false`
+#### 3. 本仓库默认使用主容器内的 TeX Live，文件 `overleaf.rc` 里的 Sibling Containers 设为 `false`
 ```
 # Sibling Containers
 SIBLING_CONTAINERS_ENABLED=false
 DOCKER_SOCKET_PATH=/var/run/docker.sock
 ```
+
+若改为沙盒编译，需要按 [官方说明](https://github.com/ayaka-notes/toolkit) 配置独立的 TeX Live 镜像；主容器的字体不会自动传入沙盒。
+
+### 使用 Docker Compose
+
+[docker-compose.yml](docker-compose.yml) 使用相同的多架构标签 `szcq/sharelatex:6.3.2`，不固定 `platform`。首次部署前在同目录的 `.env` 中保存上述生成的密钥：
+```ini
+OVERLEAF_INVITE_TOKEN_SECRET=生成的密钥
+```
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+示例使用 MongoDB 8.0 副本集，并等待初始化完成后启动 Ayakaleaf；保留原有 Redis 配置。已存在的副本集可重复启动。
+
+### 已有实例升级
+
+6.3.2 要求 MongoDB 至少 8.0（FCV 至少 7.0）以及 `OVERLEAF_INVITE_TOKEN_SECRET`。旧 Compose 使用 MongoDB 5.0，**不要将旧数据目录直接交给 MongoDB 8.0 启动**。先备份应用及数据库，按 [官方 MongoDB 升级说明](https://docs.overleaf.com/on-premises/maintenance/updating-mongodb) 逐级升级数据库并设置相应 FCV；应用也应按 [官方版本升级说明](https://docs.overleaf.com/on-premises/maintenance/upgrading) 完成所需中间版本迁移，再切换本镜像。仓库修改不会执行数据库或应用迁移。
+
+从 6.2.x 或更早的 Ayakaleaf 升级且使用了 Zotero/Mendeley 时，还需先执行 [6.3.0 发布说明](https://github.com/ayaka-notes/ayakaleaf-pro/releases/tag/pro-v6.3.0) 中的迁移脚本，见 [6.3.2 升级说明](https://github.com/ayaka-notes/ayakaleaf-pro/releases/tag/pro-v6.3.2)。
 
 ### 容器创建后手动添加字体
 
@@ -122,23 +163,36 @@ chmod +x ./install-sharelatex-fonts.sh
 
 #### 6. 注意事项
 
-- 运行脚本前，请先确认 ShareLaTeX/Overleaf 容器已经启动
+- 运行脚本前，请先确认 Ayakaleaf Pro 容器已经启动
 - 如果脚本提示找不到容器，可以先执行 `docker ps --format '{{.Names}}'` 查看实际容器名
 - 导入完成后，新编译的文档即可使用这些字体；如果项目仍识别不到中文字体，优先检查编译器是否为 `XeLaTeX`
 
 ## 自己制作镜像
 
-### 关联 Docker Hub 账号
+### 配置 GitHub Actions
 
-- 在 `Settings` 中，展开下拉列表 `Secrets and variables`，点击 `Actions`
-- 点击 `New epository secrets`, 在 `Name *` 里填写 `DOCKER_USERNAME`，在 `Secret *` 里填写 Docker Hub 账号的用户名
-- 点击 `New epository secrets`, 在 `Name *` 里填写 `DOCKER_PASSWORD`，在 `Secret *` 里填写 Docker Hub 账号的密码
+- 保留工作流 `.github/workflows/docker.yaml`，通过 `workflow_dispatch` 手动触发。
+- 在 `Settings → Secrets and variables → Actions → Variables` 设置仓库变量 `IMAGE_VERSION=6.3.2`。该变量同时决定官方基础镜像版本和发布标签；必填，使用 `X.Y.Z` 格式，并确认该官方标签支持两种架构。
+- 在 `Secrets` 设置 `DOCKER_TOKEN`，值为可向 `szcq/sharelatex` 推送的 Docker Hub 访问令牌。
+- 镜像账号和名称继续由工作流中的 `IMAGE_OWNER: szcq`、`IMAGE_NAME: sharelatex` 决定；发布到自己的账号时修改这两项。
 
-### 更新版本信息（可跳过，以后需要更新官方镜像时，执行此处操作，并编译镜像）
+### 更新版本信息
 
-- 在 `Code` 中，编辑文件 `Dockerfile`，把 `from sharelatex/sharelatex:5.4.1` 中的版本号改为最新的版本号
-- 在 `Code` 中，编辑文件 `.github/workflows/docker.yaml`，把 `tags: ${{ secrets.DOCKER_USERNAME }}/sharelatex:5.4.1` 中的版本号改为最新的版本号
+- 修改 `Dockerfile` 的 `ARG BASE_IMAGE=ghcr.io/ayaka-notes/overleaf-pro:6.3.2`，作为本地构建的默认基础镜像。
+- 同步更新仓库变量 `IMAGE_VERSION`、本文及 Compose/Toolkit 的镜像标签。
+- 当前 `TEXLIVE_YEAR=2026`；更换基础镜像时检查其 TeX Live 年份，必要时同步更新 Dockerfile 和工作流。
+- `TEXLIVE_BIN_SUBDIR` 默认根据 `TARGETARCH` 自动选择 `x86_64-linux` 或 `aarch64-linux`，并验证 biber 存在。不要在多架构构建中固定为某一种架构。
 
 ### 编译镜像
 
-- 在 `Actions` 中，点击 `Build and Push Docker Image`，在 `Run workflow` 下拉列表中点击 `Run workflow`，即可编译镜像，等编译完成后，会自动推送到 Docker Hub
+在 `Actions` 中运行 `Build and Push Docker Image`。工作流使用 QEMU 和 Buildx，一次构建并推送 `linux/amd64,linux/arm64` 的 manifest，发布为 `szcq/sharelatex:${IMAGE_VERSION}`。不额外发布 `latest` 或 `-amd64` / `-arm64` 标签，也不再运行独立的单架构发布或 manifest 合并任务。
+
+本地需要构建并推送时（需先 `docker login`，并具备支持双架构的 Buildx builder/QEMU）：
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 \
+  --build-arg BASE_IMAGE=ghcr.io/ayaka-notes/overleaf-pro:6.3.2 \
+  --build-arg TEXLIVE_YEAR=2026 \
+  -t szcq/sharelatex:6.3.2 --push .
+```
+
+保留 `fonts/` 中的自定义字体及安装脚本。新增字体放入 `fonts/` 后重新构建镜像，或按前述脚本导入已运行的容器。

@@ -141,6 +141,17 @@ if [ -n "$FONT_FILE" ]; then
 fi
 
 echo "刷新字体缓存..."
-docker exec -u root "$CONTAINER_NAME" fc-cache -fv
+docker exec -u root "$CONTAINER_NAME" sh -c '
+set -e
+
+if ! command -v fc-cache >/dev/null 2>&1; then
+    echo "容器缺少 fc-cache，安装 fontconfig..."
+    apt-get update
+    apt-get install -y --no-install-recommends fontconfig
+    rm -rf /var/lib/apt/lists/*
+fi
+
+fc-cache -fv
+'
 
 echo "完成：字体已安装到 $TARGET_DIR"

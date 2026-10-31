@@ -213,7 +213,7 @@ chmod +x ./install-sharelatex-fonts.sh
 
 - 将字体复制到容器内的 `/usr/share/fonts/addfonts`
 - 如果输入的是 zip 文件，会在容器内自动安装 `unzip` 并解压
-- 最后执行 `fc-cache -fv` 刷新字体缓存
+- 刷新缓存前检查 `fc-cache`，缺少时自动安装 `fontconfig`（容器需能访问 apt 软件源）；最后执行 `fc-cache -fv` 刷新字体缓存
 
 #### 6. 注意事项
 

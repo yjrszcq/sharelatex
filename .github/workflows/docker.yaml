@@ -2,11 +2,17 @@ name: Build and Push Docker Image
 
 on:
   workflow_dispatch:
+    inputs:
+      image_version:
+        description: 'Ayakaleaf Pro version (e.g. 6.3.2)'
+        required: true
+        default: '6.3.2'
+        type: string
 
 env:
   IMAGE_OWNER: szcq
   IMAGE_NAME: sharelatex
-  IMAGE_VERSION: ${{ vars.IMAGE_VERSION }}
+  IMAGE_VERSION: ${{ inputs.image_version }}
 
 jobs:
   build:
@@ -24,7 +30,7 @@ jobs:
       shell: bash
       run: |
         if [[ ! "$IMAGE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          echo "Set repository variable IMAGE_VERSION to an Ayakaleaf Pro version, e.g. 6.3.2" >&2
+          echo "Enter an Ayakaleaf Pro version in X.Y.Z format, e.g. 6.3.2" >&2
           exit 1
         fi
 

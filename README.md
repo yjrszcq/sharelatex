@@ -172,20 +172,20 @@ chmod +x ./install-sharelatex-fonts.sh
 ### 配置 GitHub Actions
 
 - 保留工作流 `.github/workflows/docker.yaml`，通过 `workflow_dispatch` 手动触发。
-- 在 `Settings → Secrets and variables → Actions → Variables` 设置仓库变量 `IMAGE_VERSION=6.3.2`。该变量同时决定官方基础镜像版本和发布标签；必填，使用 `X.Y.Z` 格式，并确认该官方标签支持两种架构。
+- 在 `Actions → Build and Push Docker Image → Run workflow` 中填写必填输入 `image_version`，默认 `6.3.2`。工作流直接使用输入值作为官方基础镜像版本和发布标签，无需配置仓库变量 `IMAGE_VERSION`；使用 `X.Y.Z` 格式，并确认该官方标签支持两种架构。
 - 在 `Secrets` 设置 `DOCKER_TOKEN`，值为可向 `szcq/sharelatex` 推送的 Docker Hub 访问令牌。
 - 镜像账号和名称继续由工作流中的 `IMAGE_OWNER: szcq`、`IMAGE_NAME: sharelatex` 决定；发布到自己的账号时修改这两项。
 
 ### 更新版本信息
 
 - 修改 `Dockerfile` 的 `ARG BASE_IMAGE=ghcr.io/ayaka-notes/overleaf-pro:6.3.2`，作为本地构建的默认基础镜像。
-- 同步更新仓库变量 `IMAGE_VERSION`、本文及 Compose/Toolkit 的镜像标签。
+- 运行工作流时填写对应的 `image_version`，部署时同步更新本文及 Compose/Toolkit 的镜像标签。
 - 当前 `TEXLIVE_YEAR=2026`；更换基础镜像时检查其 TeX Live 年份，必要时同步更新 Dockerfile 和工作流。
 - `TEXLIVE_BIN_SUBDIR` 默认根据 `TARGETARCH` 自动选择 `x86_64-linux` 或 `aarch64-linux`，并验证 biber 存在。不要在多架构构建中固定为某一种架构。
 
 ### 编译镜像
 
-在 `Actions` 中运行 `Build and Push Docker Image`。工作流使用 QEMU 和 Buildx，一次构建并推送 `linux/amd64,linux/arm64` 的 manifest，发布为 `szcq/sharelatex:${IMAGE_VERSION}`。不额外发布 `latest` 或 `-amd64` / `-arm64` 标签，也不再运行独立的单架构发布或 manifest 合并任务。
+在 `Actions` 中运行 `Build and Push Docker Image`，填写 `image_version` 后再点击 `Run workflow`。输入值会赋给工作流环境变量 `IMAGE_VERSION`。工作流使用 QEMU 和 Buildx，一次构建并推送 `linux/amd64,linux/arm64` 的 manifest，发布为 `szcq/sharelatex:${IMAGE_VERSION}`。不额外发布 `latest` 或 `-amd64` / `-arm64` 标签，也不再运行独立的单架构发布或 manifest 合并任务。
 
 本地需要构建并推送时（需先 `docker login`，并具备支持双架构的 Buildx builder/QEMU）：
 ```bash

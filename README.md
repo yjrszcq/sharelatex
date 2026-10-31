@@ -2,7 +2,7 @@
 
 本镜像基于 `ghcr.io/ayaka-notes/overleaf-pro`，保留完整 TeX Live 2026、系统中文字体及 `fonts/` 扩展。发布名称仍为 `szcq/sharelatex`，同一版本标签支持 `linux/amd64` 和 `linux/arm64`，无需架构后缀。
 
-官方参考：[Ayakaleaf Pro 6.3.2](https://github.com/ayaka-notes/ayakaleaf-pro/releases/tag/pro-v6.3.2)、[Ayaka Toolkit](https://github.com/ayaka-notes/toolkit)。
+官方参考：[Ayakaleaf Pro](https://github.com/ayaka-notes/ayakaleaf-pro/releases)、[Ayaka Toolkit](https://github.com/ayaka-notes/toolkit)。
 
 ## 使用此镜像
 

@@ -13,7 +13,7 @@
 
 ## 一步构建
 
-可直接使用仓库 `scripts/` 下的 [build-texlive.sh](../scripts/build-texlive.sh)，将现有字体 zip、字体目录或单个字体文件作为输入，无需手动准备本目录的 `fonts/`：
+可直接使用仓库 `scripts/` 下的 [build-texlive.sh](../scripts/build-texlive.sh)，将现有字体 zip、混合目录（多个 ZIP、字体及子文件夹）或单个字体文件作为输入，无需手动准备本目录的 `fonts/`：
 ```bash
 # 在仓库根目录执行；不传 -v 则交互输入官方镜像版本号
 ./scripts/build-texlive.sh -z /实际路径/wps-office-fonts.zip
@@ -23,7 +23,14 @@
 
 选项同时支持长名称：`--version`、`--base-image`、`--output-image`、`--zip`、`--font-dir`、`--font-file`；`-h/--help` 查看帮助。三种字体输入必须三选一，版本号与完整基础镜像名互斥。
 
-脚本在临时目录中准备字体，复用本目录的 Dockerfile 和 `build.sh` 完成镜像检查、必要时拉取和构建。成功后打印完整镜像名；失败时中止，退出时自动清理临时文件。原字体及仓库目录保持原样。zip 方式依赖运行主机的 `unzip`，脚本不自动安装主机软件，也不自动推送镜像。
+脚本内置字体整理、Dockerfile 和构建逻辑，可单独下载运行，无需本目录的其他文件；在临时目录中准备字体，完成镜像检查、必要时拉取和构建。成功后打印完整镜像名；失败时中止，退出时自动清理临时文件。原字体及仓库目录保持原样。输入包含 ZIP 时依赖运行主机的 `unzip`，脚本不自动安装主机软件，也不自动推送镜像。
+
+目录模式会递归整理子文件夹、解压其中的全部 ZIP，也会继续处理解压出来的嵌套 ZIP。每个 ZIP 单独解压到以 `.zip.unpacked`（或 `.ZIP.unpacked`）结尾的目录，保留同名字体，避免互相覆盖。成功解压后只删除临时副本中的 ZIP；原目录、原字体和原压缩包均保持不变，生成的镜像中不包含这些 ZIP。
+
+例如可以直接使用：
+```bash
+./scripts/build-texlive.sh -v 2026.1 -d /mydata/other/font
+```
 
 完成后直接进入下方“配置 Toolkit”。如果需要手动管理本目录的字体和构建过程，也可以按下面步骤操作。
 

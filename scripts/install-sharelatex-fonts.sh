@@ -5,12 +5,53 @@ msg() {
     if [ "${SCRIPT_LANG:-zh}" = en ]; then printf '%s\n' "$1"; else printf '%s\n' "$2"; fi
 }
 
+prepare_fonts() {
+    local mode="$1" source="$2" destination="$3"
+    local archive_list archive extract_dir
+
+    mkdir -p "$destination"
+    case "$mode" in
+        -d|--font-dir)
+            if [ ! -d "$source" ]; then
+                msg "Error: font directory not found: $source" "错误：找不到字体目录 $source" >&2
+                return 1
+            fi
+            cp -R "$source/." "$destination/"
+            ;;
+        -z|--zip|-f|--font-file)
+            if [ ! -f "$source" ]; then
+                msg "Error: font file not found: $source" "错误：找不到字体文件 $source" >&2
+                return 1
+            fi
+            cp "$source" "$destination/"
+            ;;
+    esac
+
+    archive_list="$(mktemp "$destination/../.font-zips.XXXXXX")"
+    while :; do
+        find "$destination" -type f -iname '*.zip' -print0 > "$archive_list"
+        [ -s "$archive_list" ] || break
+        if ! command -v unzip >/dev/null 2>&1; then
+            msg "Error: install unzip on this host first" "错误：请先在运行脚本的主机上安装 unzip" >&2
+            return 1
+        fi
+        while IFS= read -r -d '' archive; do
+            # Each ZIP has its own directory so equal font names cannot collide.
+            extract_dir="$archive.unpacked"
+            mkdir -p "$extract_dir"
+            unzip -o "$archive" -d "$extract_dir" || return $?
+            # Delete only the staged copy, and only after extraction succeeds.
+            rm -f "$archive"
+        done < "$archive_list"
+    done
+    rm -f "$archive_list"
+}
+
 CONTAINER_NAME="sharelatex"
 ZIP_FILE=""
 FONT_DIR=""
 FONT_FILE=""
 TARGET_DIR="/usr/share/fonts/addfonts"
-TMP_ZIP="/tmp/sharelatex-fonts.zip"
 
 usage() {
     cat <<EOF
@@ -22,7 +63,7 @@ usage() {
 参数：
   -c  容器名，默认 sharelatex
   -z  本地字体 zip 文件，例如 Fonts.zip
-  -d  本地字体目录，例如 Fonts
+  -d  本地字体目录，支持多个 ZIP、字体和子目录混合
   -f  本地单个字体文件，例如 simsun.ttc / simhei.ttf / simkai.ttf
   -h  显示帮助
 
@@ -97,52 +138,24 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
     exit 1
 fi
 
-msg "Creating container font directory: $TARGET_DIR" "创建容器字体目录：$TARGET_DIR"
-docker exec -u root "$CONTAINER_NAME" mkdir -p "$TARGET_DIR"
+TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/container-fonts.XXXXXX")"
+trap 'rm -rf "$TEMP_DIR"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 if [ -n "$ZIP_FILE" ]; then
-    if [ ! -f "$ZIP_FILE" ]; then
-        msg "Error: ZIP file not found: $ZIP_FILE" "错误：找不到 zip 文件 $ZIP_FILE"
-        exit 1
-    fi
-
-    msg "Copying ZIP archive to container: $ZIP_FILE" "复制 zip 文件到容器：$ZIP_FILE"
-    docker cp "$ZIP_FILE" "$CONTAINER_NAME:$TMP_ZIP"
-
-    msg "Extracting into container directory: $TARGET_DIR" "解压到容器目录：$TARGET_DIR"
-    docker exec -u root "$CONTAINER_NAME" bash -lc "
-set -e
-
-if ! command -v unzip >/dev/null 2>&1; then
-    apt-get update
-    apt-get install -y --no-install-recommends unzip
-    rm -rf /var/lib/apt/lists/*
+    prepare_fonts -z "$ZIP_FILE" "$TEMP_DIR/fonts"
+elif [ -n "$FONT_DIR" ]; then
+    prepare_fonts -d "$FONT_DIR" "$TEMP_DIR/fonts"
+else
+    prepare_fonts -f "$FONT_FILE" "$TEMP_DIR/fonts"
 fi
+chmod -R a+rX "$TEMP_DIR/fonts"
 
-unzip -o '$TMP_ZIP' -d '$TARGET_DIR'
-rm -f '$TMP_ZIP'
-"
-fi
-
-if [ -n "$FONT_DIR" ]; then
-    if [ ! -d "$FONT_DIR" ]; then
-        msg "Error: font directory not found: $FONT_DIR" "错误：找不到字体目录 $FONT_DIR"
-        exit 1
-    fi
-
-    msg "Copying fonts into container directory: $TARGET_DIR" "复制字体目录内容到容器：$TARGET_DIR"
-    docker cp "$FONT_DIR/." "$CONTAINER_NAME:$TARGET_DIR/"
-fi
-
-if [ -n "$FONT_FILE" ]; then
-    if [ ! -f "$FONT_FILE" ]; then
-        msg "Error: font file not found: $FONT_FILE" "错误：找不到字体文件 $FONT_FILE"
-        exit 1
-    fi
-
-    msg "Copying font file into container directory: $TARGET_DIR" "复制单个字体文件到容器：$TARGET_DIR"
-    docker cp "$FONT_FILE" "$CONTAINER_NAME:$TARGET_DIR/"
-fi
+msg "Creating container font directory: $TARGET_DIR" "创建容器字体目录：$TARGET_DIR"
+docker exec -u root "$CONTAINER_NAME" mkdir -p "$TARGET_DIR"
+msg "Copying prepared fonts into container: $TARGET_DIR" "将整理后的字体复制到容器：$TARGET_DIR"
+docker cp "$TEMP_DIR/fonts/." "$CONTAINER_NAME:$TARGET_DIR/"
 
 msg "Refreshing font cache..." "刷新字体缓存..."
 docker exec -u root "$CONTAINER_NAME" sh -c '

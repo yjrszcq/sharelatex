@@ -54,7 +54,7 @@ case "$TARGET" in
     *) fail 'Invalid target selection.' '字体目标选择无效。' ;;
 esac
 
-say 'Font source: 1) ZIP archive  2) Directory  3) Single font file' '字体来源：1) ZIP 压缩包  2) 字体目录  3) 单个字体文件'
+say 'Font source: 1) ZIP archive  2) Directory (fonts, ZIPs and subfolders)  3) Single font file' '字体来源：1) ZIP 压缩包  2) 混合目录（字体、ZIP、子文件夹）  3) 单个字体文件'
 ask 'Select 1, 2 or 3:' '请选择 1、2 或 3：'
 case "$REPLY" in
     1) FONT_OPTION=-z ;;
@@ -91,13 +91,11 @@ if [ -z "$REPO_DIR" ]; then
         mkdir -p "$(dirname -- "$REPO_DIR/$1")"
         curl -fsSL "$DOWNLOAD_BASE/$1" -o "$REPO_DIR/$1"
     }
-    say 'Fetching helper files into a temporary directory...' '正在临时获取配套文件……'
+    say 'Fetching the selected helper script into a temporary directory...' '正在临时获取所选功能脚本……'
     if [ "$TARGET" = 1 ]; then
         fetch scripts/install-sharelatex-fonts.sh
     else
         fetch scripts/build-texlive.sh
-        fetch texlive-custom/build.sh
-        fetch texlive-custom/Dockerfile
     fi
 fi
 

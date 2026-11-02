@@ -12,7 +12,7 @@
 - 基础镜像地址固定为 `ghcr.io/ayaka-notes/overleaf-pro`，仅通过 `IMAGE_VERSION` 指定 tag。Dockerfile 的 `ARG IMAGE_VERSION=6.3.2` 是本地构建的默认版本，可通过 `--build-arg IMAGE_VERSION=<版本号>` 覆盖。
 - 运行工作流时填写对应的 `image_version`，部署时同步更新本文及 Compose/Toolkit 的镜像标签。
 - Git Bridge 参照[官方 Dockerfile](https://github.com/ayaka-notes/ayakaleaf-pro/blob/pro-v6.3.2/services/git-bridge/Dockerfile)在构建阶段自行编译：`IMAGE_VERSION` 同时选择官方源码标签 `pro-v${IMAGE_VERSION}`，通过 `make package` 生成 JAR；`envsubst` 也使用 Go 从源码编译。不会从官方 Git Bridge 镜像提取二进制。
-- 构建时需能访问 GitHub、Go 模块代理和 Maven Central；版本对应的官方源码标签必须存在。Maven、Go 和源码仅保留在构建阶段，最终镜像只包含编译产物、对应配置和运行依赖。
+- 构建时需能访问 GitHub、Go 模块代理和 Maven Central；Maven 统一使用 `docker/git-bridge/maven-settings.xml` 中的官方 Central 仓库，避免依赖描述中失效的旧仓库拖慢构建；版本对应的官方源码标签必须存在。Maven、Go 和源码仅保留在构建阶段，最终镜像只包含编译产物、对应配置和运行依赖。
 - 当前 `TEXLIVE_YEAR=2026`；更换基础镜像时检查其 TeX Live 年份，必要时同步更新 Dockerfile 和工作流。
 - `TEXLIVE_BIN_SUBDIR` 默认使用 amd64 的 `x86_64-linux`，仅在 `TARGETARCH=arm64` 时改为 `aarch64-linux`。
 
@@ -29,3 +29,30 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 ```
 
 保留 `fonts/` 中的自定义字体及安装脚本。新增字体放入 `fonts/` 后重新构建镜像，或按前述脚本导入已运行的容器。
+
+## 单独导出 Git Bridge 产物
+
+构建会先把 JAR、`envsubst`、配置模板、启动脚本和 runit 服务文件统一整理到 `/out/opt/git-bridge/`。主镜像通过一次 `COPY` 导入完整的 `/opt/git-bridge/`，再用链接注册初始化脚本和 runit 服务，保留主镜像原有的系统目录布局。
+
+产物自带 `opt/git-bridge/SHA256SUMS` 清单，导入时会校验所有打包文件，缺失或损坏会使构建失败。
+
+也可以只构建 `git-bridge-artifacts` 阶段，将这个目录树导出为便于传输的 tar 文件：
+
+```bash
+docker buildx build --platform linux/amd64 \
+  --build-arg IMAGE_VERSION=6.3.2 \
+  --target git-bridge-artifacts \
+  --output type=tar,dest=git-bridge-amd64.tar .
+```
+
+arm64 使用 `--platform linux/arm64`，并修改输出文件名。`envsubst` 是架构相关的程序，产物必须与主镜像的平台一致。需要直接导出目录时，将 `--output` 改为 `type=local,dest=./git-bridge-artifacts`。
+
+传输后可在 Linux 上解压并检查完整性：
+
+```bash
+mkdir -p git-bridge-artifacts
+tar -xf git-bridge-amd64.tar -C git-bridge-artifacts
+(cd git-bridge-artifacts && sha256sum -c opt/git-bridge/SHA256SUMS)
+```
+
+该产物包只包含 Git Bridge 文件；Java 21、Git、SQLite 等系统运行依赖仍由主镜像安装。清单用于检查打包文件的完整性，升级官方版本时仍需核对上游 Dockerfile 是否新增文件或运行依赖。

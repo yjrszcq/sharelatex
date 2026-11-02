@@ -18,33 +18,48 @@ RUN git clone --depth 1 --filter=blob:none --sparse \
         https://github.com/ayaka-notes/ayakaleaf-pro.git /src && \
     git -C /src sparse-checkout set services/git-bridge
 WORKDIR /src/services/git-bridge
+# Ignore obsolete repositories inherited from upstream dependency descriptors.
+COPY docker/git-bridge/maven-settings.xml /root/.m2/settings.xml
 RUN make package && \
     find target -name 'writelatex-git-bridge*jar-with-dependencies.jar' \
         -exec mv {} /git-bridge.jar \;
 
-FROM ghcr.io/ayaka-notes/overleaf-pro:${IMAGE_VERSION} AS git-bridge-runtime
-
-# Git Bridge: install our source-built JAR and the matching source configuration.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-21-jre-headless git sqlite3 util-linux && \
-    rm -rf /var/lib/apt/lists/* && \
-    useradd --system --user-group --home-dir /data/git-bridge git-bridge
-
-COPY --from=git-bridge-builder /git-bridge.jar /opt/git-bridge/git-bridge.jar
-COPY --from=envsubst-builder /go/bin/envsubst /opt/git-bridge/envsubst
-COPY --from=git-bridge-builder /src/services/git-bridge/conf/envsubst_template.json /opt/git-bridge/envsubst_template.json
-COPY --from=git-bridge-builder /src/services/git-bridge/start.sh /opt/git-bridge/start.sh
-COPY docker/git-bridge/init.sh /etc/my_init.d/190_git_bridge.sh
-COPY docker/git-bridge/run /etc/service/git-bridge/run
+# Assemble a complete filesystem tree for copying or exporting in one operation.
+FROM git-bridge-builder AS git-bridge-package
+RUN mkdir -p /out/opt/git-bridge/conf /out/opt/git-bridge/service && \
+    install -m 0644 /git-bridge.jar /out/opt/git-bridge/git-bridge.jar && \
+    install -m 0644 conf/envsubst_template.json /out/opt/git-bridge/envsubst_template.json && \
+    install -m 0755 start.sh /out/opt/git-bridge/start.sh
+COPY --from=envsubst-builder /go/bin/envsubst /out/opt/git-bridge/envsubst
+COPY docker/git-bridge/init.sh /out/opt/git-bridge/init.sh
+COPY docker/git-bridge/run /out/opt/git-bridge/service/run
 RUN sed -i \
         -e 's|/opt/envsubst|/opt/git-bridge/envsubst|g' \
         -e 's|/envsubst_template.json|/opt/git-bridge/envsubst_template.json|g' \
         -e 's|/conf/runtime.json|/opt/git-bridge/conf/runtime.json|g' \
         -e 's|/git-bridge.jar|/opt/git-bridge/git-bridge.jar|g' \
-        /opt/git-bridge/start.sh && \
-    chmod +x /opt/git-bridge/start.sh /opt/git-bridge/envsubst \
-        /etc/my_init.d/190_git_bridge.sh /etc/service/git-bridge/run && \
-    touch /etc/service/git-bridge/down
+        /out/opt/git-bridge/start.sh && \
+    chmod +x /out/opt/git-bridge/start.sh /out/opt/git-bridge/envsubst \
+        /out/opt/git-bridge/init.sh /out/opt/git-bridge/service/run && \
+    touch /out/opt/git-bridge/service/down && \
+    cd /out && \
+    find . -type f ! -path './opt/git-bridge/SHA256SUMS' \
+        -exec sha256sum {} + > opt/git-bridge/SHA256SUMS
+
+# Export the filesystem tree without the build toolchain.
+FROM scratch AS git-bridge-artifacts
+COPY --from=git-bridge-package /out/ /
+
+FROM ghcr.io/ayaka-notes/overleaf-pro:${IMAGE_VERSION} AS git-bridge-runtime
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends openjdk-21-jre-headless git sqlite3 util-linux && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd --system --user-group --home-dir /data/git-bridge git-bridge
+
+COPY --from=git-bridge-artifacts /opt/git-bridge/ /opt/git-bridge/
+RUN ln -s /opt/git-bridge/init.sh /etc/my_init.d/190_git_bridge.sh && \
+    ln -s /opt/git-bridge/service /etc/service/git-bridge && \
+    cd / && sha256sum -c /opt/git-bridge/SHA256SUMS
 
 ENV GIT_BRIDGE_HOST=127.0.0.1 GIT_BRIDGE_PORT=8000
 

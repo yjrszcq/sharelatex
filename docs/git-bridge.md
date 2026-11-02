@@ -1,6 +1,6 @@
 # Git Bridge：内置或外部服务
 
-镜像内置与 `IMAGE_VERSION` 同版本的官方 Git Bridge 程序及 Java 21 运行环境，支持 amd64 和 arm64，沿用主镜像的 runit 进行进程管理。
+镜像内置从官方 `pro-v${IMAGE_VERSION}` 源码自行编译的 Git Bridge 及 Java 21 运行环境，支持 amd64 和 arm64，沿用主镜像的 runit 进行进程管理。
 
 `GIT_BRIDGE_ENABLED` 是内置和外部模式共用的功能总开关，`GIT_BRIDGE_HOST` 只负责选择连接目标：
 

@@ -1,17 +1,39 @@
 ARG IMAGE_VERSION=6.3.2
-FROM ghcr.io/ayaka-notes/overleaf-pro/git-bridge:${IMAGE_VERSION} AS git-bridge
+
+# Adapted from Ayakaleaf Pro services/git-bridge/Dockerfile.
+# Build envsubst with support for ${VAR:-default} in the official template.
+FROM golang:1.25.5-bookworm AS envsubst-builder
+WORKDIR /build
+RUN CGO_ENABLED=0 go install github.com/a8m/envsubst/cmd/envsubst@latest
+
+FROM maven:3-amazoncorretto-21-debian AS git-bridge-builder
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends make git sqlite3 curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Match the Git Bridge source release to the main image version.
+ARG IMAGE_VERSION
+RUN git clone --depth 1 --filter=blob:none --sparse \
+        --branch "pro-v${IMAGE_VERSION}" \
+        https://github.com/ayaka-notes/ayakaleaf-pro.git /src && \
+    git -C /src sparse-checkout set services/git-bridge
+WORKDIR /src/services/git-bridge
+RUN make package && \
+    find target -name 'writelatex-git-bridge*jar-with-dependencies.jar' \
+        -exec mv {} /git-bridge.jar \;
+
 FROM ghcr.io/ayaka-notes/overleaf-pro:${IMAGE_VERSION} AS git-bridge-runtime
 
-# Git Bridge: reuse the official JAR and configuration for the same release.
+# Git Bridge: install our source-built JAR and the matching source configuration.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends openjdk-21-jre-headless git sqlite3 util-linux && \
     rm -rf /var/lib/apt/lists/* && \
     useradd --system --user-group --home-dir /data/git-bridge git-bridge
 
-COPY --from=git-bridge /git-bridge.jar /opt/git-bridge/git-bridge.jar
-COPY --from=git-bridge /opt/envsubst /opt/git-bridge/envsubst
-COPY --from=git-bridge /envsubst_template.json /opt/git-bridge/envsubst_template.json
-COPY --from=git-bridge /start.sh /opt/git-bridge/start.sh
+COPY --from=git-bridge-builder /git-bridge.jar /opt/git-bridge/git-bridge.jar
+COPY --from=envsubst-builder /go/bin/envsubst /opt/git-bridge/envsubst
+COPY --from=git-bridge-builder /src/services/git-bridge/conf/envsubst_template.json /opt/git-bridge/envsubst_template.json
+COPY --from=git-bridge-builder /src/services/git-bridge/start.sh /opt/git-bridge/start.sh
 COPY docker/git-bridge/init.sh /etc/my_init.d/190_git_bridge.sh
 COPY docker/git-bridge/run /etc/service/git-bridge/run
 RUN sed -i \

@@ -8,6 +8,7 @@
 # 操作与 overleaf-toolkit 一致
 # 此外需要修改 overleaf.rc 里的 SERVER_PRO 为 true
 # =======================================================
+# 未指定 GIT_BRIDGE_HOST 时使用镜像内置的 Git Bridge
 # 如需沙盒编译，请按官方文档另配 TeX Live 编译镜像和宿主路径
 # =======================================================
 
@@ -23,14 +24,13 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-      git-bridge:
-        condition: service_started
 
     ports:
       - ${OVERLEAF_PORT}:80
 
     volumes:
       - ${OVERLEAF_DATA_PATH}/overleaf:/var/lib/overleaf
+      - ${OVERLEAF_DATA_PATH}/git-bridge:/data/git-bridge
 
     environment:
       OVERLEAF_APP_NAME: Ayakaleaf Pro
@@ -56,44 +56,13 @@ services:
       AI_API_KEY: "${AI_API_KEY}"
       AI_MODEL: "${AI_MODEL}"
 
-      # -------------------------
       # Git Bridge
-      # -------------------------
-      GIT_BRIDGE_ENABLED: "true"
-      GIT_BRIDGE_HOST: "git-bridge"
-      GIT_BRIDGE_PORT: "8000"
-
-      # Git Bridge 需要访问主容器内的 History Service
-      V1_HISTORY_URL: "http://ayakaleaf:3100/api"
+      GIT_BRIDGE_ENABLED: "${GIT_BRIDGE_ENABLED}"
       
       # MCP 随 Git integration 启用，无独立开关、额外端口或容器
       # 在 Account Settings 生成 Git token，再从 Integrations → MCP server 取连接地址
 
     stop_grace_period: 60s
-
-
-  # -------------------------
-  # Git Bridge：版本与主容器保持一致
-  # -------------------------
-  git-bridge:
-    image: ghcr.io/ayaka-notes/overleaf-pro/git-bridge:6.3.2
-    container_name: ayakaleaf-git-bridge
-    restart: unless-stopped
-
-    volumes:
-      - ${OVERLEAF_DATA_PATH}/git-bridge:/data/git-bridge
-
-    expose:
-      - "8000"
-
-    environment:
-      GIT_BRIDGE_API_BASE_URL: "http://ayakaleaf:3000/api/v0/"
-      GIT_BRIDGE_OAUTH2_SERVER: "http://ayakaleaf"
-      GIT_BRIDGE_POSTBACK_BASE_URL: "http://git-bridge:8000"
-      GIT_BRIDGE_ROOT_DIR: "/data/git-bridge"
-
-    user: root
-    command: ["/server-pro-start.sh"]
 
 
   mongo:

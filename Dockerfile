@@ -1,5 +1,32 @@
 ARG IMAGE_VERSION=6.3.2
-FROM ghcr.io/ayaka-notes/overleaf-pro:${IMAGE_VERSION}
+FROM ghcr.io/ayaka-notes/overleaf-pro/git-bridge:${IMAGE_VERSION} AS git-bridge
+FROM ghcr.io/ayaka-notes/overleaf-pro:${IMAGE_VERSION} AS git-bridge-runtime
+
+# Git Bridge: reuse the official JAR and configuration for the same release.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends openjdk-21-jre-headless git sqlite3 util-linux && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd --system --user-group --home-dir /data/git-bridge git-bridge
+
+COPY --from=git-bridge /git-bridge.jar /opt/git-bridge/git-bridge.jar
+COPY --from=git-bridge /opt/envsubst /opt/git-bridge/envsubst
+COPY --from=git-bridge /envsubst_template.json /opt/git-bridge/envsubst_template.json
+COPY --from=git-bridge /start.sh /opt/git-bridge/start.sh
+COPY docker/git-bridge/init.sh /etc/my_init.d/190_git_bridge.sh
+COPY docker/git-bridge/run /etc/service/git-bridge/run
+RUN sed -i \
+        -e 's|/opt/envsubst|/opt/git-bridge/envsubst|g' \
+        -e 's|/envsubst_template.json|/opt/git-bridge/envsubst_template.json|g' \
+        -e 's|/conf/runtime.json|/opt/git-bridge/conf/runtime.json|g' \
+        -e 's|/git-bridge.jar|/opt/git-bridge/git-bridge.jar|g' \
+        /opt/git-bridge/start.sh && \
+    chmod +x /opt/git-bridge/start.sh /opt/git-bridge/envsubst \
+        /etc/my_init.d/190_git_bridge.sh /etc/service/git-bridge/run && \
+    touch /etc/service/git-bridge/down
+
+ENV GIT_BRIDGE_HOST=127.0.0.1 GIT_BRIDGE_PORT=8000
+
+FROM git-bridge-runtime
 
 ARG TEXLIVE_YEAR=2026
 ARG TARGETARCH

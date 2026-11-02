@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+exec 2>&1
+
+export GIT_BRIDGE_ROOT_DIR="${GIT_BRIDGE_ROOT_DIR:-/data/git-bridge}"
+export GIT_BRIDGE_BIND_IP="${GIT_BRIDGE_BIND_IP:-127.0.0.1}"
+export GIT_BRIDGE_API_BASE_URL="${GIT_BRIDGE_API_BASE_URL:-http://127.0.0.1:3000/api/v0/}"
+export GIT_BRIDGE_OAUTH2_SERVER="${GIT_BRIDGE_OAUTH2_SERVER:-http://127.0.0.1}"
+export GIT_BRIDGE_POSTBACK_BASE_URL="${GIT_BRIDGE_POSTBACK_BASE_URL:-http://127.0.0.1:${GIT_BRIDGE_PORT:-8000}}"
+
+cd /opt/git-bridge
+exec setpriv --reuid=git-bridge --regid=git-bridge --init-groups /opt/git-bridge/start.sh

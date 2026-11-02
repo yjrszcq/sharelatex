@@ -1,163 +1,174 @@
+# =======================================================
+#                      Ayakaleaf Pro
+# 集成全部 Pro 功能的 Overleaf Community Edition 增强版
+# https://github.com/ayaka-notes/ayakaleaf-pro
+# =======================================================
+# 或者使用 ayakaleaf 官方的 toolkit 部署
+# https://github.com/ayaka-notes/toolkit
+# 操作与 overleaf-toolkit 一致
+# 此外需要修改 overleaf.rc 里的 SERVER_PRO 为 true
+# =======================================================
+# 如需沙盒编译，请按官方文档另配 TeX Live 编译镜像和宿主路径
+# =======================================================
+
 services:
-    sharelatex:
-        restart: always
-        # Ayakaleaf Pro + TeX Live full；同一标签自动选择 amd64 / arm64
-        image: szcq/sharelatex:6.3.2
-        container_name: overleaf-sharelatex
-        depends_on:
-            mongo:
-                condition: service_healthy
-            mongoinit:
-                condition: service_completed_successfully
-            redis:
-                condition: service_started
-        ports:
-            - 0.0.0.0:10802:80
-        links:
-            - mongo
-            - redis
-        stop_grace_period: 60s
-        volumes:
-            - ./overleaf/sharelatex/lib:/var/lib/overleaf
-            - ./overleaf/sharelatex/log:/var/log/overleaf
-            # - ./data/sharelatex_texlive:/texlive
-            ########################################################################
-            ####  Server Pro: Uncomment the following line to mount the docker  ####
-            ####             socket, required for Sibling Containers to work    ####
-            ########################################################################
-            # - /var/run/docker.sock:/var/run/docker.sock
-        environment:
+  ayakaleaf:
+    image: szcq/sharelatex:6.3.2
+    container_name: ayakaleaf
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      git-bridge:
+        condition: service_started
 
-            OVERLEAF_APP_NAME: Ayakaleaf Pro
-            OVERLEAF_MONGO_URL: mongodb://mongo/sharelatex?replicaSet=overleaf
-            # 在 .env 中设置：openssl rand -base64 32
-            OVERLEAF_INVITE_TOKEN_SECRET: ${OVERLEAF_INVITE_TOKEN_SECRET:?Set OVERLEAF_INVITE_TOKEN_SECRET in .env}
-            # 使用主容器内的 TeX Live 和字体
-            SANDBOXED_COMPILES: 'false'
-            SANDBOXED_COMPILES_SIBLING_CONTAINERS: 'false'
-            DOCKER_RUNNER: 'false'
+    ports:
+      - "127.0.0.1:8080:80"
 
-            # Same property, unfortunately with different names in
-            # different locations
-            OVERLEAF_REDIS_HOST: redis
-            REDIS_HOST: redis
+    volumes:
+      - ./data/overleaf:/var/lib/overleaf
+      - /var/run/docker.sock:/var/run/docker.sock
 
-            ENABLED_LINKED_FILE_TYPES: 'project_file,project_output_file'
+    environment:
+      OVERLEAF_APP_NAME: Ayakaleaf Pro
+      # OVERLEAF_SITE_LANGUAGE: "zh-CN"
+      
+      OVERLEAF_MONGO_URL: mongodb://mongo/sharelatex
+      OVERLEAF_REDIS_HOST: redis
+      REDIS_HOST: redis
 
-            # Enables Thumbnail generation using ImageMagick
-            ENABLE_CONVERSIONS: 'true'
+      # 必填：放到 .env
+      OVERLEAF_INVITE_TOKEN_SECRET: ${OVERLEAF_INVITE_TOKEN_SECRET}
 
-            # Disables email confirmation requirement
-            EMAIL_CONFIRMATION_DISABLED: 'true'
+      # 如果套域名反代，改成你的域名
+      OVERLEAF_SITE_URL: https://latex.example.com
 
-            ## Set for SSL via nginx-proxy
-            #VIRTUAL_HOST: 103.112.212.22
+      EMAIL_CONFIRMATION_DISABLED: "true"
+      ENABLED_LINKED_FILE_TYPES: "project_file,project_output_file"
+      ENABLE_CONVERSIONS: "true"
 
-            # OVERLEAF_SITE_URL: http://sharelatex.mydomain.com
-            # OVERLEAF_NAV_TITLE: Our ShareLaTeX Instance
-            # OVERLEAF_HEADER_IMAGE_URL: http://somewhere.com/mylogo.png
-            # OVERLEAF_ADMIN_EMAIL: support@it.com
+      # AI 功能，若启用则需要填写 BASE_URL / API_KEY / MODEL
+      AI_ENABLED: "true"
+      AI_BASE_URL: "https://api.example.com/v1"
+      AI_API_KEY: "${AI_API_KEY}"
+      AI_MODEL: "gpt-6.1-sol"
 
-            # OVERLEAF_LEFT_FOOTER: '[{"text": "Powered by <a href=\"https://www.sharelatex.com\">ShareLaTeX</a> 2016"},{"text": "Another page I want to link to can be found <a href=\"here\">here</a>"} ]'
-            # OVERLEAF_RIGHT_FOOTER: '[{"text": "Hello I am on the Right"} ]'
+      # -------------------------
+      # Git Bridge
+      # -------------------------
+      GIT_BRIDGE_ENABLED: "true"
+      GIT_BRIDGE_HOST: "git-bridge"
+      GIT_BRIDGE_PORT: "8000"
 
-            # OVERLEAF_EMAIL_FROM_ADDRESS: "team@sharelatex.com"
+      # Git Bridge 需要访问主容器内的 History Service
+      V1_HISTORY_URL: "http://ayakaleaf:3100/api"
+      
+      # MCP 随 Git integration 启用，无独立开关、额外端口或容器
+      # 在 Account Settings 生成 Git token，再从 Integrations → MCP server 取连接地址
 
-            # OVERLEAF_EMAIL_AWS_SES_ACCESS_KEY_ID:
-            # OVERLEAF_EMAIL_AWS_SES_SECRET_KEY:
+    stop_grace_period: 60s
 
-            # OVERLEAF_EMAIL_SMTP_HOST: smtp.mydomain.com
-            # OVERLEAF_EMAIL_SMTP_PORT: 587
-            # OVERLEAF_EMAIL_SMTP_SECURE: false
-            # OVERLEAF_EMAIL_SMTP_USER:
-            # OVERLEAF_EMAIL_SMTP_PASS:
-            # OVERLEAF_EMAIL_SMTP_TLS_REJECT_UNAUTH: true
-            # OVERLEAF_EMAIL_SMTP_IGNORE_TLS: false
-            # OVERLEAF_EMAIL_SMTP_NAME: '127.0.0.1'
-            # OVERLEAF_EMAIL_SMTP_LOGGER: true
-            # OVERLEAF_CUSTOM_EMAIL_FOOTER: "This system is run by department x"
 
-            # ENABLE_CRON_RESOURCE_DELETION: true
+  # -------------------------
+  # Git Bridge：版本与主容器保持一致
+  # -------------------------
+  git-bridge:
+    image: ghcr.io/ayaka-notes/overleaf-pro/git-bridge:6.3.2
+    container_name: ayakaleaf-git-bridge
+    restart: unless-stopped
 
-            ################
-            ## Server Pro ##
-            ################
+    volumes:
+      - ./data/git-bridge:/data/git-bridge
 
-            # 如需沙盒编译，请按官方文档另配 TeX Live 编译镜像和宿主路径。
+    expose:
+      - "8000"
 
-            ## Works with test LDAP server shown at bottom of docker compose
-            # OVERLEAF_LDAP_URL: 'ldap://ldap:389'
-            # OVERLEAF_LDAP_SEARCH_BASE: 'ou=people,dc=planetexpress,dc=com'
-            # OVERLEAF_LDAP_SEARCH_FILTER: '(uid={{username}})'
-            # OVERLEAF_LDAP_BIND_DN: 'cn=admin,dc=planetexpress,dc=com'
-            # OVERLEAF_LDAP_BIND_CREDENTIALS: 'GoodNewsEveryone'
-            # OVERLEAF_LDAP_EMAIL_ATT: 'mail'
-            # OVERLEAF_LDAP_NAME_ATT: 'cn'
-            # OVERLEAF_LDAP_LAST_NAME_ATT: 'sn'
-            # OVERLEAF_LDAP_UPDATE_USER_DETAILS_ON_LOGIN: 'true'
-            # OVERLEAF_TEMPLATES_USER_ID: "578773160210479700917ee5"
-            # OVERLEAF_NEW_PROJECT_TEMPLATE_LINKS: '[ {"name":"All Templates","url":"/templates/all"}]'
-            # OVERLEAF_PROXY_LEARN: "true"
+    environment:
+      GIT_BRIDGE_API_BASE_URL: "http://ayakaleaf:3000/api/v0/"
+      GIT_BRIDGE_OAUTH2_SERVER: "http://ayakaleaf"
+      GIT_BRIDGE_POSTBACK_BASE_URL: "http://git-bridge:8000"
+      GIT_BRIDGE_ROOT_DIR: "/data/git-bridge"
 
-    # 新部署使用 MongoDB 8.0；已有 5.x 数据请先按 README 逐级升级。
-    mongo:
-        restart: always
-        image: mongo:8.0
-        container_name: overleaf-mongo
-        command: "--replSet overleaf"
-        expose:
-            - 27017
-        volumes:
-            - ./overleaf/mongo:/data/db
-        healthcheck:
-            test: echo 'db.stats().ok' | mongosh localhost:27017/test --quiet
-            interval: 10s
-            timeout: 10s
-            retries: 5
+    user: root
+    command: ["/server-pro-start.sh"]
 
-    mongoinit:
-        image: mongo:8.0
-        # this container will exit after executing the command
-        restart: "no"
-        depends_on:
-            mongo:
-                condition: service_healthy
-        entrypoint:
-            [
-                "mongosh",
-                "--host",
-                "mongo:27017",
-                "--eval",
-                'try { rs.status() } catch (e) { if (e.codeName !== "NotYetInitialized") throw e; rs.initiate({ _id: "overleaf", members: [ { _id: 0, host: "mongo:27017" } ] }) }',
-            ]
 
-    redis:
-        restart: always
-        image: redis:8.0.2
-        container_name: overleaf-redis
-        expose:
-            - 6379
-        volumes:
-            - ./overleaf/redis:/data
+  mongo:
+    image: mongo:8.0
+    container_name: ayakaleaf-mongo
+    restart: unless-stopped
 
-    # ldap:
-    #    restart: always
-    #    image: rroemhild/test-openldap
-    #    container_name: ldap
-    #    expose:
-    #        - 389
+    # MongoDB 与 Linux 内核不兼容时用
+    # environment:
+    #   GLIBC_TUNABLES: "glibc.pthread.rseq=1"
+    #   MONGO_TCMALLOC_PER_CPU_CACHE_SIZE_BYTES: "0"
+      
+    command:
+      - mongod
+      - --replSet
+      - overleaf
+      - --bind_ip_all
 
-    # See https://github.com/jwilder/nginx-proxy for documentation on how to configure the nginx-proxy container,
-    # and https://github.com/overleaf/overleaf/wiki/HTTPS-reverse-proxy-using-Nginx for an example of some recommended
-    # settings. We recommend using a properly managed nginx instance outside of the Overleaf Server Pro setup,
-    # but the example here can be used if you'd prefer to run everything with docker-compose
+    volumes:
+      - ./data/mongo:/data/db
 
-    # nginx-proxy:
-    #     image: jwilder/nginx-proxy
-    #     container_name: nginx-proxy
-    #     ports:
-    #       #- "80:80"
-    #       - "443:443"
-    #     volumes:
-    #       - /var/run/docker.sock:/tmp/docker.sock:ro
-    #       - /home/sharelatex/tmp:/etc/nginx/certs
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "db.adminCommand('ping').ok"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  mongo-init:
+    image: mongo:8.0
+    container_name: ayakaleaf-mongo-init
+    restart: "no"
+
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+    entrypoint:
+      - /bin/bash
+      - -c
+
+    command:
+      - |
+        mongosh --host mongo:27017 --eval '
+          try {
+            rs.status()
+          } catch (e) {
+            rs.initiate({
+              _id: "overleaf",
+              members: [
+                { _id: 0, host: "mongo:27017" }
+              ]
+            })
+          }
+        '
+
+
+  redis:
+    image: redis:7.4
+    container_name: ayakaleaf-redis
+    restart: unless-stopped
+
+    volumes:
+      - ./data/redis:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
